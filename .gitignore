@@ -1,0 +1,36 @@
+# Build outputs
+build/
+app/build/
+app/out/
+*.class
+*.dex
+
+# Gradle
+.gradle/
+local.properties
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Agent internal workspaces
+.agents/
+
+# Keystores (keep repo keys safe if any custom ones are generated)
+# release.jks is included for reproducible demo builds, but ignore private keys
+*.keystore
+!release.jks

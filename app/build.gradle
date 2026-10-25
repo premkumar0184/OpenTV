@@ -1,0 +1,69 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystoreFile = file("${rootDir}/release.jks")
+if (!keystoreFile.exists()) {
+    println "Auto-generating release keystore at ${keystoreFile}..."
+    def proc = new ProcessBuilder('keytool', '-genkeypair',
+            '-keystore', keystoreFile.absolutePath,
+            '-storepass', 'opentv123',
+            '-keypass', 'opentv123',
+            '-alias', 'opentv',
+            '-keyalg', 'RSA',
+            '-keysize', '2048',
+            '-validity', '10000',
+            '-dname', 'CN=OpenTV, O=OpenTV, C=US').start()
+    proc.waitFor()
+}
+
+android {
+    namespace 'org.opentv.launcher'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "org.opentv.launcher"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile keystoreFile
+            storePassword 'opentv123'
+            keyAlias 'opentv'
+            keyPassword 'opentv123'
+            v1SigningEnabled true
+            v2SigningEnabled true
+            enableV3Signing true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/*.version', 'META-INF/DEPENDENCIES']
+        }
+    }
+}
+
+dependencies {
+    // Pure Java Android Framework: Zero external dependencies for release APK
+    testImplementation 'junit:junit:4.13.2'
+}
