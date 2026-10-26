@@ -1,0 +1,159 @@
+name: Code Quality & Linting
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  shell-lint:
+    name: Lint Shell Scripts (ShellCheck)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck on Shell Scripts
+        run: |
+          echo "Scanning repository for shell scripts (*.sh)..."
+          SH_FILES=$(find . -name "*.sh" -not -path "*/.*")
+          if [ -z "$SH_FILES" ]; then
+            echo "No shell scripts found to lint."
+            exit 0
+          fi
+          echo "Found shell scripts:"
+          echo "$SH_FILES"
+          echo "------------------------------------------------------------"
+          shellcheck --version
+          echo "------------------------------------------------------------"
+          # Lints with warning severity while excluding intentional word-splitting (SC2046, SC2086)
+          # and metadata target assignment (SC2034)
+          shellcheck --severity=warning --exclude=SC2046,SC2034,SC2086 $SH_FILES
+          echo "All shell scripts passed ShellCheck validation cleanly."
+
+  powershell-lint:
+    name: Lint PowerShell Scripts (PSScriptAnalyzer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate PowerShell Syntax & PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $psFiles = Get-ChildItem -Path . -Filter *.ps1 -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/]\.' }
+          if (-not $psFiles) {
+              Write-Host "No PowerShell scripts found to lint."
+              exit 0
+          }
+          Write-Host "Found $($psFiles.Count) PowerShell script(s) to analyze."
+
+          # 1. AST Parser Syntax Validation
+          $syntaxErrors = @()
+          foreach ($file in $psFiles) {
+              Write-Host "Validating AST syntax for $($file.FullName)..."
+              $parseErrors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$parseErrors)
+              if ($parseErrors.Count -gt 0) {
+                  $parseErrors | ForEach-Object { Write-Error "Line $($_.Extent.StartLineNumber): $($_.Message)" }
+                  $syntaxErrors += $parseErrors
+              }
+          }
+          if ($syntaxErrors.Count -gt 0) {
+              Write-Error "PowerShell AST syntax validation failed with $($syntaxErrors.Count) error(s)!"
+              exit 1
+          }
+          Write-Host "PowerShell AST syntax validation passed cleanly." -ForegroundColor Green
+
+          # 2. PSScriptAnalyzer Static Analysis
+          Write-Host "Running PSScriptAnalyzer (-Severity Error)..."
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
+          if ($results) {
+              $results | Format-Table -AutoSize
+              Write-Error "PSScriptAnalyzer detected Error-level issues."
+              exit 1
+          }
+          Write-Host "PSScriptAnalyzer passed with 0 errors." -ForegroundColor Green
+
+  python-lint:
+    name: Lint Python & Verify Zero Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Linting Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Python Bytecode Compilation Check (py_compile)
+        run: |
+          echo "Compiling all Python files to bytecode..."
+          python -m compileall -q companion tests $([ -d scripts ] && echo scripts)
+
+      - name: Verify Zero Pip Dependencies in Runtime Code
+        run: |
+          echo "Enforcing zero external pip dependencies in companion/ runtime code..."
+          python -c "
+          import ast, os, sys
+          stdlib = set(sys.stdlib_module_names) if hasattr(sys, 'stdlib_module_names') else set()
+          stdlib.update({'msvcrt', 'winreg', 'winsound', 'termios', 'tty', 'syslog', '__future__', 'opentv'})
+          violations = []
+          for root, _, files in os.walk('companion'):
+              for f in files:
+                  if f.endswith('.py'):
+                      p = os.path.join(root, f)
+                      with open(p, 'r', encoding='utf-8') as fh:
+                          tree = ast.parse(fh.read(), filename=p)
+                      for node in ast.walk(tree):
+                          if isinstance(node, ast.Import):
+                              for n in node.names:
+                                  mod = n.name.split('.')[0]
+                                  if mod and mod not in stdlib:
+                                      violations.append((p, getattr(node, 'lineno', 0), mod))
+                          elif isinstance(node, ast.ImportFrom):
+                              if node.level == 0 and node.module:
+                                  mod = node.module.split('.')[0]
+                                  if mod and mod not in stdlib:
+                                      violations.append((p, getattr(node, 'lineno', 0), mod))
+          if violations:
+              print('ERROR: Found non-standard-library imports in companion/:')
+              for path, line, mod in violations:
+                  print(f'  {path}:{line} -> {mod}')
+              sys.exit(1)
+          print('SUCCESS: Verified 0 external pip dependencies across companion/ runtime code.')
+          "
+
+      - name: Smoke Test Python Module Imports
+        run: |
+          echo "Verifying clean import of all companion modules..."
+          PYTHONPATH=. python -c "
+          import importlib, pkgutil, sys
+          sys.path.insert(0, 'companion')
+          import opentv
+          for _, modname, _ in pkgutil.walk_packages(opentv.__path__, 'opentv.'):
+              importlib.import_module(modname)
+          print('All companion modules imported successfully.')
+          "
+
+      - name: Run Flake8 Linting
+        run: |
+          echo "Running flake8 critical syntax and undefined name checks..."
+          flake8 companion tests $([ -d scripts ] && echo scripts) --count --select=E9,F63,F7,F82 --show-source --statistics
+          echo "Running flake8 style checks..."
+          flake8 companion tests $([ -d scripts ] && echo scripts) --count --max-line-length=127 --statistics --exit-zero

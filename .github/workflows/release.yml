@@ -1,0 +1,228 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'v*.*.*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk-and-companion:
+    name: Build APK & Companion Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: |
+            platform-tools
+            cmdline-tools;latest
+            platforms;android-34
+            platforms;android-35
+            build-tools;34.0.0
+            build-tools;35.0.0
+
+      - name: Verify Android SDK & Build Tools
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          ls -la "$ANDROID_HOME/platforms"
+          ls -la "$ANDROID_HOME/build-tools"
+
+      # 1. Compile Standalone Release APK & Prepare Asset
+      - name: Compile Standalone Release APK (app/build.sh)
+        run: |
+          echo "=== Compiling Standalone Reproducible Release APK ==="
+          chmod +x app/build.sh
+          ./app/build.sh
+          test -f app-release.apk || { echo "ERROR: app-release.apk not found after build!" >&2; exit 1; }
+          cp app-release.apk opentv.apk
+          test -f opentv.apk || { echo "ERROR: opentv.apk not found!" >&2; exit 1; }
+
+      # 2. Multi-Scheme Signature Verification (v1, v2, v3)
+      - name: Verify APK Signatures with apksigner
+        run: |
+          echo "=== Verifying APK Multi-Scheme Signature (v1, v2, v3) ==="
+          test -f opentv.apk || { echo "ERROR: opentv.apk not found!" >&2; exit 1; }
+          BT=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+          test -x "$BT/apksigner" || { echo "ERROR: apksigner not found at $BT/apksigner" >&2; exit 1; }
+          VERIFY_OUTPUT=$("$BT/apksigner" verify --verbose opentv.apk)
+          echo "$VERIFY_OUTPUT"
+          echo "$VERIFY_OUTPUT" | grep -q "Verified using v1 scheme (JAR signing): true" || { echo "ERROR: v1 signature missing!" >&2; exit 1; }
+          echo "$VERIFY_OUTPUT" | grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" || { echo "ERROR: v2 signature missing!" >&2; exit 1; }
+          echo "$VERIFY_OUTPUT" | grep -q "Verified using v3 scheme (APK Signature Scheme v3): true" || { echo "ERROR: v3 signature missing!" >&2; exit 1; }
+          echo "SUCCESS: All signature schemes (v1, v2, v3) verified."
+
+      # 3. APK Footprint Ceiling Enforcement (< 60 KB)
+      - name: Enforce Release APK Footprint Ceiling (< 60 KB)
+        run: |
+          echo "=== Enforcing Release APK Footprint Ceiling (< 60 KB / 61,440 bytes) ==="
+          test -f opentv.apk || { echo "ERROR: opentv.apk not found!" >&2; exit 1; }
+          test -s opentv.apk || { echo "ERROR: opentv.apk is empty (0 bytes)!" >&2; exit 1; }
+          APK_SIZE=$(stat -c%s opentv.apk 2>/dev/null || stat -f%z opentv.apk 2>/dev/null)
+          test -n "$APK_SIZE" && [ "$APK_SIZE" -gt 0 ] 2>/dev/null || { echo "ERROR: Failed to determine valid APK size: '$APK_SIZE'" >&2; exit 1; }
+          MAX_SIZE=61440 # 60 * 1024 bytes
+          echo "Release APK Size: $APK_SIZE bytes (ceiling: $MAX_SIZE bytes / 60 KB)"
+          if [ "$APK_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "ERROR: Release APK size ($APK_SIZE bytes) exceeds strict 60 KB limit ($MAX_SIZE bytes)!" >&2
+            exit 1
+          fi
+          echo "SUCCESS: Release APK ($APK_SIZE bytes) is within the 60 KB footprint limit."
+
+      # 4. Package Standalone Zipapp (.pyz)
+      - name: Build Standalone Executable Zipapp
+        run: |
+          echo "=== Building Standalone Executable zipapp (opentv.pyz) ==="
+          python3 scripts/package_binaries.py --all --output-dir .
+          test -f opentv.pyz || { echo "ERROR: opentv.pyz not created!" >&2; exit 1; }
+          chmod +x opentv.pyz
+          ./opentv.pyz --help
+
+      # 5. Package Standalone Companion Archive
+      - name: Package Standalone Companion Archive
+        run: |
+          echo "=== Packaging Standalone Companion Archive (opentv-companion.tar.gz) ==="
+          FILES="companion README.md LICENSE rollback.sh rollback.bat rollback.ps1"
+          if [ -d scripts ]; then
+            FILES="$FILES scripts"
+          fi
+          tar --exclude="__pycache__" --exclude="*.pyc" -czf opentv-companion.tar.gz $FILES
+          test -f opentv-companion.tar.gz || { echo "ERROR: opentv-companion.tar.gz not found!" >&2; exit 1; }
+          test -s opentv-companion.tar.gz || { echo "ERROR: opentv-companion.tar.gz is empty!" >&2; exit 1; }
+
+      # 6. Compute SHA256 Checksums
+      - name: Compute Release Asset SHA256 Checksums
+        run: |
+          echo "=== Computing SHA256 Checksums for Release Assets ==="
+          sha256sum opentv.apk opentv.pyz opentv-companion.tar.gz > SHA256SUMS.txt
+          test -f SHA256SUMS.txt || { echo "ERROR: SHA256SUMS.txt not created!" >&2; exit 1; }
+          cat SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+
+      # 7. Upload Core Release Artifacts
+      - name: Upload Core Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-release-assets
+          path: |
+            opentv.apk
+            opentv.pyz
+            opentv-companion.tar.gz
+            SHA256SUMS.txt
+          if-no-files-found: error
+
+  build-native-binaries:
+    name: Build Native Binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: opentv-linux-x86_64
+            binary_src: dist/opentv
+          - os: macos-latest
+            artifact_name: opentv-macos-universal
+            binary_src: dist/opentv
+          - os: windows-latest
+            artifact_name: opentv-windows-x64.exe
+            binary_src: dist/opentv.exe
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Generate Spec & Compile Native Binary
+        shell: bash
+        run: |
+          python scripts/package_binaries.py --pyinstaller-spec
+          pyinstaller --clean --noconfirm scripts/opentv.spec --distpath dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp dist/opentv.exe "${{ matrix.artifact_name }}"
+          else
+            chmod +x dist/opentv
+            cp dist/opentv "${{ matrix.artifact_name }}"
+          fi
+
+      - name: Upload Native Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [build-apk-and-companion, build-native-binaries]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Core Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: core-release-assets
+          path: release_assets
+
+      - name: Download Linux Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: opentv-linux-x86_64
+          path: release_assets
+
+      - name: Download macOS Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: opentv-macos-universal
+          path: release_assets
+
+      - name: Download Windows Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: opentv-windows-x64.exe
+          path: release_assets
+
+      - name: Recompute Master Checksums
+        run: |
+          cd release_assets
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

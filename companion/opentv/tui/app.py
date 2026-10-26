@@ -14,6 +14,7 @@ PROJECT.md Features F2.4, F2.5, F2.6:
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+
+from opentv.core.app_names import format_app_display, get_app_name
 
 from opentv.core.adb import AdbClient, AdbDevice, AdbWrapper
 from opentv.core.config import (
@@ -530,15 +533,7 @@ class OpenTVApp:
             for j in range(columns):
                 if j < len(row_items):
                     pkg = row_items[j]
-                    entry = self.safety_db.get_entry(pkg)
-                    if entry and entry.human_name and entry.human_name != pkg:
-                        label = entry.human_name[:col_width]
-                    else:
-                        parts = pkg.split(".")
-                        if len(parts) >= 2 and parts[-1] in ("tv", "atv", "app", "android"):
-                            label = f"{parts[-2]}.{parts[-1]}"[:col_width]
-                        else:
-                            label = parts[-1][:col_width]
+                    label = get_app_name(pkg)[:col_width]
                     row_cells.append(f" {i + j + 1}. {label}".ljust(col_width + 2))
                 else:
                     row_cells.append(" [Empty]".ljust(col_width + 2))
@@ -594,34 +589,70 @@ class OpenTVApp:
         self.fallback.output_fn("\n--- Connection Wizard ---")
         devices = self.scan_devices()
         online = [d for d in devices if d.state == "device"]
+        options = []
         if online:
             self.fallback.output_fn(f"Discovered {len(online)} online device(s):")
             for i, d in enumerate(online):
                 self.fallback.output_fn(f"  [{i + 1}] {d.serial} ({d.model})")
-            opt = self.fallback.prompt_choice(
-                "Select a device or choose Manual Connection:",
-                [f"Use {d.serial}" for d in online] + ["Manual Wi-Fi Connect", "Wi-Fi Pair (Android 11+)"],
-                default_index=0,
-            )
-            if opt < len(online):
-                self.target_device = online[opt].serial
-                self.interrogate_device()
-                self.fallback.output_fn(f"Target selected: {self.target_device}")
-                return
-            elif opt == len(online):
-                pass
-            else:
-                self._fallback_pair()
+            options.extend([f"Use {d.serial}" for d in online])
+
+        options.extend([
+            "Scan Local Network (mDNS/SSDP)",
+            "Manual Wi-Fi Connect",
+            "Wi-Fi Pair (Android 11+)",
+            "Cancel / Back to Menu",
+        ])
+
+        opt = self.fallback.prompt_choice(
+            "Select Connection Method:",
+            options,
+            default_index=0,
+        )
+        num_attached = len(online)
+        if opt < num_attached:
+            self.target_device = online[opt].serial
+            self.interrogate_device()
+            self.fallback.output_fn(f"Target selected: {self.target_device}")
+            return
+
+        method_idx = opt - num_attached
+        if method_idx == 0:  # Scan Local Network (mDNS/SSDP)
+            self.fallback.output_fn("\nScanning local network for Android TVs (timeout 3.0s)...")
+            try:
+                from opentv.core.discovery import discover_devices
+                discovered = discover_devices(timeout=3.0)
+            except Exception as exc:
+                discovered = []
+                self.fallback.output_fn(f"Scan failed: {exc}")
+
+            if not discovered:
+                self.fallback.output_fn("No Android TV devices discovered on the network.")
                 return
 
-        ip = self.fallback.prompt_text("Enter TV IP Address", default="192.168.1.50")
-        port_s = self.fallback.prompt_text("Enter ADB Port", default="5555")
-        try:
-            port = int(port_s)
-        except ValueError:
-            port = 5555
-        self.connect_target(ip, port)
-        self.fallback.output_fn(self.status_message)
+            dev_opts = [
+                f"{d.ip}:{d.port} - {d.model or d.hostname or 'Android TV'} ({d.source})"
+                for d in discovered
+            ] + ["Cancel"]
+            sel = self.fallback.prompt_choice("Select Discovered TV to Connect:", dev_opts, default_index=0)
+            if sel < len(discovered):
+                picked = discovered[sel]
+                self.connect_target(picked.ip, picked.port)
+                self.fallback.output_fn(self.status_message)
+            return
+
+        elif method_idx == 1:  # Manual Wi-Fi Connect
+            ip = self.fallback.prompt_text("Enter TV IP Address", default="192.168.1.50")
+            port_s = self.fallback.prompt_text("Enter ADB Port", default="5555")
+            try:
+                port = int(port_s)
+            except ValueError:
+                port = 5555
+            self.connect_target(ip, port)
+            self.fallback.output_fn(self.status_message)
+
+        elif method_idx == 2:  # Wi-Fi Pair
+            self._fallback_pair()
+            return
 
     def _fallback_pair(self) -> None:
         addr = self.fallback.prompt_text("Enter TV Pairing Address (IP:port)", default="192.168.1.50:38450")
@@ -648,9 +679,10 @@ class OpenTVApp:
             options = self.current_config.apps
 
         preselected = [i for i, p in enumerate(options) if p in self.current_config.apps]
+        display_options = [format_app_display(p) for p in options]
         chosen_indices = self.fallback.prompt_multiselect(
             "Select apps visible on home screen (comma-separated numbers)",
-            options,
+            display_options,
             preselected=preselected,
         )
         self.current_config.apps = [options[i] for i in chosen_indices]
@@ -844,7 +876,7 @@ class OpenTVApp:
                 out.append(f"  [{i + 1}] {d.serial} ({d.model})")
         else:
             out.append("No USB devices detected.")
-        out.append("\nOptions: [C] Connect to IP:5555, [P] Pair Wi-Fi (Android 11+), [B] Back to Menu")
+        out.append("\nOptions: [S] Scan Local Network, [C] Connect to IP:5555, [P] Pair Wi-Fi (Android 11+), [B] Back to Menu")
         out.append("Choice: ")
         self.stdout.write("\n".join(out))
         self.stdout.flush()
@@ -854,12 +886,57 @@ class OpenTVApp:
             self.target_device = online[int(k.char) - 1].serial
             self.interrogate_device()
             self.status_message = f"Selected {self.target_device}"
+        elif k.char in ("s", "S"):
+            self._run_interactive_network_scan(raw_engine)
         elif k.char in ("c", "C"):
             # Simple prompt
             self.stdout.write("\nEnter IP address [192.168.1.50]: ")
             self.stdout.flush()
             ip = self.stdin.readline().strip() or "192.168.1.50"
             self.connect_target(ip, 5555)
+
+    def _run_interactive_network_scan(self, raw_engine: RawTerminalEngine) -> None:
+        """Executes mDNS/SSDP scan and displays interactive device selection list."""
+        self.stdout.write(self.terminal.clear_screen())
+        self.stdout.write(self.terminal.bold("--- Scanning Local Network for Android TVs ---\n\n"))
+        self.stdout.write("Broadcasting mDNS & SSDP queries across local subnet...\n")
+        self.stdout.write("Please wait up to 3 seconds...\n")
+        self.stdout.flush()
+
+        try:
+            from opentv.core.discovery import discover_devices
+            discovered = discover_devices(timeout=3.0)
+        except Exception as exc:
+            discovered = []
+            self.status_message = f"Discovery error: {exc}"
+
+        if not discovered:
+            self.stdout.write("\nNo Android TV devices found on local network.\n")
+            self.stdout.write("Ensure your TV is powered on and Network Debugging is active.\n")
+            self.stdout.write("Press any key to return...")
+            self.stdout.flush()
+            raw_engine.read_key()
+            return
+
+        self.stdout.write(self.terminal.clear_screen())
+        out = [
+            self.terminal.bold("--- Discovered Local Android TVs ---"),
+            f"Found {len(discovered)} device(s) on local subnet:\n",
+        ]
+        for idx, dev in enumerate(discovered, 1):
+            name = dev.model or dev.hostname or "Android TV"
+            out.append(f"  [{idx}] {dev.ip}:{dev.port} - {name} ({dev.source})")
+
+        out.append("\nPress [1-9] to connect, or [B/Esc] to cancel: ")
+        self.stdout.write("\n".join(out))
+        self.stdout.flush()
+
+        k = raw_engine.read_key()
+        if k.char.isdigit():
+            idx = int(k.char) - 1
+            if 0 <= idx < len(discovered):
+                picked = discovered[idx]
+                self.connect_target(picked.ip, picked.port)
 
     def _run_interactive_layout(self, raw_engine: RawTerminalEngine) -> None:
         """Interactive Home Screen Layout Manager with live 6-column grid."""
@@ -878,12 +955,15 @@ class OpenTVApp:
 
             start = max(0, cursor - 5)
             end = min(len(apps), start + 12)
+            term_cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+            max_label_len = max(20, term_cols - 12)
             for idx in range(start, end):
                 pkg = apps[idx]
                 is_vis = pkg in self.current_config.apps
                 chk = "[X]" if is_vis else "[ ]"
                 prefix = "> " if idx == cursor else "  "
-                line = f"{prefix}{chk} {idx + 1}. {pkg}"
+                formatted_label = format_app_display(pkg, max_width=max_label_len)
+                line = f"{prefix}{chk} {idx + 1}. {formatted_label}"
                 if idx == cursor:
                     out.append(self.terminal.bold(self.terminal.invert(line)))
                 else:

@@ -6,6 +6,10 @@ from .database import (
     SafetyCategory,
     PackageEntry,
     CURATED_PACKAGES,
+    IMMUTABLE_NEVER_PACKAGES,
+    DEFAULT_DEFINITIONS_URL,
+    get_definitions_cache_path,
+    update_definitions,
     PackageSafetyDB,
 )
 from .guardrails import (
@@ -24,6 +28,10 @@ __all__ = [
     "SafetyCategory",
     "PackageEntry",
     "CURATED_PACKAGES",
+    "IMMUTABLE_NEVER_PACKAGES",
+    "DEFAULT_DEFINITIONS_URL",
+    "get_definitions_cache_path",
+    "update_definitions",
     "PackageSafetyDB",
     "GuardrailViolation",
     "GuardrailsEngine",

@@ -1,0 +1,76 @@
+name: CI Test Matrix
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+        exclude:
+          # macos-latest runners operate on Apple Silicon (arm64). Python 3.8 reached
+          # End-of-Life in October 2024 and does not have native arm64 builds available.
+          # Full testing for macOS begins at Python 3.9.
+          - os: macos-latest
+            python-version: "3.8"
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      PYTHONUNBUFFERED: "1"
+      OPENTV_RUN_EMULATOR: "0"
+      PYTHONPATH: "."
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+          check-latest: false
+
+      - name: Display environment diagnostics
+        run: |
+          python --version
+          python -c "import sys, platform; print(f'Platform: {platform.platform()} | Python: {sys.version.split()[0]} | Executable: {sys.executable}')"
+
+      - name: Run Unified Test Runner (Tiers 1-5)
+        run: python tests/run_tests.py -v
+
+      - name: Run Full Unittest Discovery (All 253 Tests)
+        run: python -m unittest discover -s tests -v

@@ -981,8 +981,8 @@ class TestTuiAppAdversarial(unittest.TestCase):
         ]
         out = app.generate_grid_preview(apps, columns=6)
         self.assertIn("+------------------+", out)
-        self.assertIn("1. ninja", out)
-        self.assertIn("2. youtube.tv", out)
+        self.assertIn("1. Netflix", out)
+        self.assertIn("2. YouTube", out)
         self.assertIn("[Empty]", out)
 
     def test_app_fallback_screens_layout_manager(self):

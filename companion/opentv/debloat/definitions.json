@@ -1,0 +1,1446 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-10-26T12:00:00Z",
+  "packages": [
+    {
+      "package_name": "android",
+      "category": "never",
+      "human_name": "Android System",
+      "description": "Core OS framework",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.systemui",
+      "category": "never",
+      "human_name": "System UI",
+      "description": "Navigation and status bar",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.settings",
+      "category": "never",
+      "human_name": "Settings",
+      "description": "System settings provider",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.tv.settings",
+      "category": "never",
+      "human_name": "TV Settings",
+      "description": "Android TV settings UI",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.providers.settings",
+      "category": "never",
+      "human_name": "Settings Storage",
+      "description": "System settings SQLite provider",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.settings.intelligence",
+      "category": "never",
+      "human_name": "Settings Intelligence",
+      "description": "Settings indexing service",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.shell",
+      "category": "never",
+      "human_name": "Android Shell",
+      "description": "ADB shell executor",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.packageinstaller",
+      "category": "never",
+      "human_name": "Package Installer",
+      "description": "App installer and permissions",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.packageinstaller",
+      "category": "never",
+      "human_name": "Google Package Installer",
+      "description": "Google app installer",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.permissioncontroller",
+      "category": "never",
+      "human_name": "Permission Controller",
+      "description": "Runtime permission manager",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.bluetooth",
+      "category": "never",
+      "human_name": "Bluetooth Service",
+      "description": "Remote controls and audio devices",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.externalstorage",
+      "category": "never",
+      "human_name": "External Storage",
+      "description": "USB and external storage access",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.providers.media",
+      "category": "never",
+      "human_name": "Media Provider",
+      "description": "Indexed media storage",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.providers.media.module",
+      "category": "never",
+      "human_name": "Media Module",
+      "description": "Modular media provider",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.providers.downloads",
+      "category": "never",
+      "human_name": "Download Manager",
+      "description": "System download provider",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.keychain",
+      "category": "never",
+      "human_name": "Key Chain",
+      "description": "System certificate store",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.inputdevices",
+      "category": "never",
+      "human_name": "Input Devices",
+      "description": "Remote buttons translation",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.location.fused",
+      "category": "never",
+      "human_name": "Fused Location",
+      "description": "Hardware location provider",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.se",
+      "category": "never",
+      "human_name": "Secure Element",
+      "description": "Hardware crypto keystore",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.providers.tv",
+      "category": "never",
+      "human_name": "TV Provider",
+      "description": "HDMI passthrough and tuner database",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.networkstack.inprocess",
+      "category": "never",
+      "human_name": "Network Stack",
+      "description": "Wi-Fi and IP connectivity",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.networkstack.permissionconfig",
+      "category": "never",
+      "human_name": "Network Permission Config",
+      "description": "Network permissions",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.certinstaller",
+      "category": "never",
+      "human_name": "Certificate Installer",
+      "description": "X509 security cert installer",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.companiondevicemanager",
+      "category": "never",
+      "human_name": "Companion Device Manager",
+      "description": "Accessory pairing manager",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.statementservice",
+      "category": "never",
+      "human_name": "Intent Statement Service",
+      "description": "App links verification",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.vpndialogs",
+      "category": "never",
+      "human_name": "VPN Dialogs",
+      "description": "Secure VPN setup dialogs",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.proxyhandler",
+      "category": "never",
+      "human_name": "Proxy Handler",
+      "description": "System network proxy client",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.pacprocessor",
+      "category": "never",
+      "human_name": "PAC Processor",
+      "description": "Proxy auto-config script runner",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.captiveportallogin",
+      "category": "never",
+      "human_name": "Captive Portal Login",
+      "description": "Wi-Fi web authentication",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.dolby.android.audio.service",
+      "category": "never",
+      "human_name": "Dolby Audio",
+      "description": "Hardware Dolby decoding",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.gms",
+      "category": "never",
+      "human_name": "Google Play Services",
+      "description": "Play APIs and DRM",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.gsf",
+      "category": "never",
+      "human_name": "Google Services Framework",
+      "description": "Push notifications foundation",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.vending",
+      "category": "never",
+      "human_name": "Google Play Store",
+      "description": "App store client",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.provision",
+      "category": "never",
+      "human_name": "AOSP Provision",
+      "description": "Initial device provisioning flag",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.tv.provision",
+      "category": "never",
+      "human_name": "TV Provision",
+      "description": "Android TV provisioning gate",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.managedprovisioning",
+      "category": "never",
+      "human_name": "Managed Provisioning",
+      "description": "Enterprise device setup",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.inputmethod.latin",
+      "category": "never",
+      "human_name": "Gboard TV",
+      "description": "On-screen keyboard",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.inputmethod.latin",
+      "category": "never",
+      "human_name": "AOSP Keyboard",
+      "description": "Default fallback keyboard",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.leanback.ime",
+      "category": "never",
+      "human_name": "Leanback Keyboard",
+      "description": "Legacy TV keyboard",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.inputmethod.international",
+      "category": "never",
+      "human_name": "TCL Keyboard",
+      "description": "TCL on-screen keyboard",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.apps.mediashell",
+      "category": "keep",
+      "human_name": "Chromecast Built-in",
+      "description": "Google Cast receiver",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.katniss",
+      "category": "keep",
+      "human_name": "Google Assistant",
+      "description": "Voice search",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tv.assistant",
+      "category": "keep",
+      "human_name": "Google Assistant TV",
+      "description": "TV voice assistant",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.marvin.talkback",
+      "category": "keep",
+      "human_name": "TalkBack",
+      "description": "Accessibility screen reader",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tts",
+      "category": "keep",
+      "human_name": "Text-to-Speech",
+      "description": "Speech synthesizer",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.webview",
+      "category": "keep",
+      "human_name": "Android System WebView",
+      "description": "In-app browser engine",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.dreams.basic",
+      "category": "keep",
+      "human_name": "Basic Screensaver",
+      "description": "Burn-in protection screensaver",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.apps.tv.dreamx",
+      "category": "keep",
+      "human_name": "Google TV Ambient",
+      "description": "Ambient mode screensaver",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tv.remote.service",
+      "category": "keep",
+      "human_name": "Android TV Remote",
+      "description": "Mobile app remote service",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tvrecommendations",
+      "category": "safe",
+      "human_name": "TV Recommendations",
+      "description": "Sponsored home carousel ads",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.backdrop",
+      "category": "safe",
+      "human_name": "TV Backdrop Ads",
+      "description": "Sponsored wallpaper promotions",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.videos",
+      "category": "safe",
+      "human_name": "Google TV Movies",
+      "description": "Promotional movie store",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.youtube.tvmusic",
+      "category": "safe",
+      "human_name": "YouTube Music TV",
+      "description": "Music streaming bloat",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.play.games",
+      "category": "safe",
+      "human_name": "Google Play Games",
+      "description": "Gaming hub bloatware",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.feedback",
+      "category": "safe",
+      "human_name": "Feedback Reporter",
+      "description": "Bug report telemetry",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.printspooler",
+      "category": "safe",
+      "human_name": "Print Spooler",
+      "description": "Unnecessary printer service on TV",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.htmlviewer",
+      "category": "safe",
+      "human_name": "HTML Viewer",
+      "description": "Static HTML viewer",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.android.soundpicker",
+      "category": "safe",
+      "human_name": "Sound Picker",
+      "description": "Ringtone picker on TV",
+      "brand": "generic",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.tvx",
+      "category": "never",
+      "human_name": "Sony Live TV / HDMI",
+      "description": "Core HDMI input manager",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.tvinput",
+      "category": "never",
+      "human_name": "Sony TV Input",
+      "description": "Hardware HDMI service",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.braviasync",
+      "category": "never",
+      "human_name": "BRAVIA Sync",
+      "description": "HDMI-CEC control",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.braviasync",
+      "category": "never",
+      "human_name": "BRAVIA Sync Service",
+      "description": "HDMI-CEC service",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.remotepairing",
+      "category": "never",
+      "human_name": "Sony Remote Pairing",
+      "description": "Bluetooth remote pairing",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.rcpowerkey",
+      "category": "never",
+      "human_name": "Sony Power Key Handler",
+      "description": "Power button key handler",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.uinputservice",
+      "category": "never",
+      "human_name": "Sony UInput Service",
+      "description": "Hardware remote input service",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.sonysystemservice",
+      "category": "never",
+      "human_name": "Sony System Service",
+      "description": "Hardware board controller",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.settings",
+      "category": "never",
+      "human_name": "Sony Bravia Settings",
+      "description": "Hardware picture/sound menu",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.systemui",
+      "category": "never",
+      "human_name": "Sony System UI",
+      "description": "Bravia quick launcher overlay",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "tv.samba.ssm",
+      "category": "safe",
+      "human_name": "Samba TV ACR",
+      "description": "Viewing habit telemetry",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.vewd.core.service",
+      "category": "safe",
+      "human_name": "Vewd Core",
+      "description": "Third-party ad and app engine",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.demomode",
+      "category": "safe",
+      "human_name": "Retail Demo",
+      "description": "Store display loop",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.hbbtvlauncher",
+      "category": "safe",
+      "human_name": "HbbTV Launcher",
+      "description": "Broadcast interactive ads",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.airplayapp",
+      "category": "safe",
+      "human_name": "AirPlay Receiver",
+      "description": "Optional Apple streaming app",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.sony.dtv.videoframeserver",
+      "category": "safe",
+      "human_name": "Video Frame Server",
+      "description": "Retail video streamer",
+      "brand": "sony",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.settings",
+      "category": "never",
+      "human_name": "TCL Settings",
+      "description": "Picture & sound hardware settings",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.suspension",
+      "category": "never",
+      "human_name": "TCL Source Picker",
+      "description": "Input switching menu",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.tvinput",
+      "category": "never",
+      "human_name": "TCL TV Input",
+      "description": "Hardware tuner/HDMI provider",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.providers.config",
+      "category": "never",
+      "human_name": "TCL Config Provider",
+      "description": "Hardware panel configuration",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.useragreement",
+      "category": "never",
+      "human_name": "TCL User Agreement",
+      "description": "System agreement enforcement",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.tcl_bt_rcu_service",
+      "category": "never",
+      "human_name": "TCL Bluetooth RCU",
+      "description": "Remote control connection service",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.tv",
+      "category": "keep",
+      "human_name": "TCL Live TV",
+      "description": "TCL Channel tuner app",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.micmanager",
+      "category": "keep",
+      "human_name": "TCL Mic Manager",
+      "description": "Far-field microphone driver",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.waterfall.overseas",
+      "category": "safe",
+      "human_name": "TCL Waterfall Feed",
+      "description": "Promotional ad banner feed",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.esticker",
+      "category": "safe",
+      "human_name": "TCL E-Sticker",
+      "description": "Store feature badges",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.partnercustomizer",
+      "category": "safe",
+      "human_name": "TCL Partner Customizer",
+      "description": "Carrier/partner bloat injector",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.messagebox",
+      "category": "safe",
+      "human_name": "TCL Message Box",
+      "description": "Marketing notification popups",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.smartalexa",
+      "category": "safe",
+      "human_name": "TCL Alexa Integration",
+      "description": "Optional Alexa bridge",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.copydatatotv",
+      "category": "safe",
+      "human_name": "TCL Migration Tool",
+      "description": "Setup data transfer tool",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.audioplayer",
+      "category": "safe",
+      "human_name": "TCL Audio Player",
+      "description": "Stock USB audio player",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.imageplayer",
+      "category": "safe",
+      "human_name": "TCL Image Player",
+      "description": "Stock USB image gallery",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.videoplayer",
+      "category": "safe",
+      "human_name": "TCL Video Player",
+      "description": "Stock USB video player",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.keyhelp",
+      "category": "safe",
+      "human_name": "TCL Remote Guide",
+      "description": "Remote helper overlay",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.usercenter",
+      "category": "safe",
+      "human_name": "TCL Account Center",
+      "description": "TCL Cloud account prompt",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.dashboard",
+      "category": "safe",
+      "human_name": "TCL Dashboard Feed",
+      "description": "Promotional dashboard panel",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.ttvs",
+      "category": "safe",
+      "human_name": "TCL TTVS Assistant",
+      "description": "TCL voice promotion app",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.tcl.factory.view",
+      "category": "safe",
+      "human_name": "TCL Factory Mode",
+      "description": "Factory test utility",
+      "brand": "tcl",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.homeintentresolver",
+      "category": "never",
+      "human_name": "Philips Home Router",
+      "description": "Routes remote Home key",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.GlobalKey",
+      "category": "never",
+      "human_name": "Philips Global Key",
+      "description": "Hardware button event mapper",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.playtv",
+      "category": "never",
+      "human_name": "Philips PlayTV",
+      "description": "HDMI passthrough switching",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.hdmiservice",
+      "category": "never",
+      "human_name": "Philips HDMI Service",
+      "description": "Hardware HDMI CEC / ARC service",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.channels",
+      "category": "never",
+      "human_name": "Philips Channel Database",
+      "description": "Tuner channel provider",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.tvsystemui",
+      "category": "never",
+      "human_name": "Philips TV System UI",
+      "description": "OSD menu system overlay",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.tvpowermanagerservice",
+      "category": "never",
+      "human_name": "Philips Power Service",
+      "description": "Power state manager",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.tv.tptvservice",
+      "category": "never",
+      "human_name": "Philips TP TV Service",
+      "description": "Panel timing controller",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.settings",
+      "category": "never",
+      "human_name": "Philips TV Settings",
+      "description": "Ambilight & picture settings",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.lkb",
+      "category": "never",
+      "human_name": "Philips Local Keyboard",
+      "description": "Physical TV side buttons",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.xtv",
+      "category": "never",
+      "human_name": "Philips xTV Platform",
+      "description": "Hardware platform binder",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.menudataapp",
+      "category": "never",
+      "human_name": "Philips Menu Data",
+      "description": "Settings metadata catalog",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.eum",
+      "category": "never",
+      "human_name": "Philips EUM User Manual",
+      "description": "Electronic user manual service",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.aurora",
+      "category": "never",
+      "human_name": "Philips Aurora Framework",
+      "description": "Core display driver bridge",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.demomode",
+      "category": "safe",
+      "human_name": "Philips Demo Mode",
+      "description": "Retail store loop mode",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.nettv",
+      "category": "safe",
+      "human_name": "NetTV Portal",
+      "description": "Legacy smart app gallery",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "org.droidtv.philipstvcollection",
+      "category": "safe",
+      "human_name": "Philips TV Collection",
+      "description": "Sponsored recommendations",
+      "brand": "philips",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.jamdeo.tv.common",
+      "category": "never",
+      "human_name": "Hisense HAL Service",
+      "description": "Display board interface",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.jamdeo.tv.input",
+      "category": "never",
+      "human_name": "Hisense TV Input",
+      "description": "Hardware HDMI/tuner bridge",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.hisense.tv.settings",
+      "category": "never",
+      "human_name": "Hisense TV Settings",
+      "description": "Hardware picture settings",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.hisense.service.remote",
+      "category": "never",
+      "human_name": "Hisense Remote Service",
+      "description": "Bluetooth remote driver",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "net.vidaatv.hisense.android.tv",
+      "category": "safe",
+      "human_name": "Hisense FAST Channels",
+      "description": "Ad-supported stream banners",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "android.autoinstalls.config.hisense",
+      "category": "safe",
+      "human_name": "Partner Auto-installer",
+      "description": "Pushes bloatware",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.hisense.storemode",
+      "category": "safe",
+      "human_name": "Hisense Store Mode",
+      "description": "Retail shop promotional video loop",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.jamdeo.tv.vod",
+      "category": "safe",
+      "human_name": "Hisense On-Demand Bloat",
+      "description": "Promoted video catalog",
+      "brand": "hisense",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.xiaomi.mitv.settings",
+      "category": "never",
+      "human_name": "Mi TV Settings",
+      "description": "Picture & sound hardware settings",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.inputservice",
+      "category": "never",
+      "human_name": "Mi TV Input Service",
+      "description": "Hardware HDMI switcher",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.remoteservice",
+      "category": "never",
+      "human_name": "Mi Remote Service",
+      "description": "Bluetooth remote control pairing",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.tvhome",
+      "category": "keep",
+      "human_name": "PatchWall Core",
+      "description": "PatchWall home launcher core",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.tvhome.atv",
+      "category": "keep",
+      "human_name": "PatchWall ATV Bridge",
+      "description": "Android TV home bridge",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.tvhome.michannel",
+      "category": "safe",
+      "human_name": "PatchWall Sponsored",
+      "description": "Content recommendation ads",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.tvhome.mitvplus",
+      "category": "safe",
+      "human_name": "Mi TV+ Channels",
+      "description": "Promotional streaming feed",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.xiaomi.mitv.updateservice",
+      "category": "safe",
+      "human_name": "Mi TV Update Notifier",
+      "description": "Promotional update popup",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.xiaomi.mitv.mediaexplorer",
+      "category": "safe",
+      "human_name": "Mi Media Explorer",
+      "description": "Stock ad-supported file viewer",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.mitv.videoplayer",
+      "category": "safe",
+      "human_name": "Mi Video Player",
+      "description": "Ad-supported stock video player",
+      "brand": "xiaomi",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.apps.tv.launcherx",
+      "category": "never",
+      "human_name": "Google TV Home",
+      "description": "Stock launcher guarded from bootloop",
+      "brand": "google",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tungsten.setupwraith",
+      "category": "never",
+      "human_name": "Google TV Setup Wizard",
+      "description": "Setup recovery handler",
+      "brand": "google",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.tungsten.overscanmouselayer",
+      "category": "never",
+      "human_name": "Google TV Overscan Layer",
+      "description": "Display overscan calibration",
+      "brand": "google",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.google.android.apps.nbu.smartconnect.tv",
+      "category": "keep",
+      "human_name": "Google Smart Connect",
+      "description": "Google Home device linking",
+      "brand": "google",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.shield.agent",
+      "category": "never",
+      "human_name": "Shield Core Agent",
+      "description": "Shield hardware management daemon",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.tegraremote.server",
+      "category": "never",
+      "human_name": "Shield Remote Server",
+      "description": "Tegra remote pairing service",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.inputdevices",
+      "category": "never",
+      "human_name": "Shield Controller Service",
+      "description": "Shield gamepad/remote driver",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.sharedstorage",
+      "category": "never",
+      "human_name": "Shield Storage Provider",
+      "description": "NAS and USB external storage mount",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.shield.settings",
+      "category": "never",
+      "human_name": "Shield TV Settings",
+      "description": "AI upscaling & HDMI CEC settings",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.remotelogger",
+      "category": "safe",
+      "human_name": "Shield Remote Logger",
+      "description": "Telemetry uploader",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.tegrazone3",
+      "category": "safe",
+      "human_name": "TegraZone",
+      "description": "Legacy gaming store ads",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.shield.diagnostics",
+      "category": "safe",
+      "human_name": "Shield Diagnostics",
+      "description": "Background telemetry collection",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    },
+    {
+      "package_name": "com.nvidia.ota",
+      "category": "safe",
+      "human_name": "Shield OTA Notifier",
+      "description": "Promotional OS update banners",
+      "brand": "nvidia",
+      "reasons": [],
+      "caveats": null,
+      "service_impact": null
+    }
+  ]
+}

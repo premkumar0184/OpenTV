@@ -7,6 +7,7 @@ device pairing, configuration generation, APK deployment, and safe debloating wi
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import subprocess
@@ -16,6 +17,12 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from opentv import __version__
 from opentv.core.adb import AdbClient, AdbDevice
+from opentv.core.app_names import (
+    format_app_display,
+    get_app_category,
+    get_app_metadata,
+    get_app_name,
+)
 from opentv.core.config import (
     DEFAULT_THEME,
     HdmiInputConfig,
@@ -113,8 +120,129 @@ def resolve_target_device(
 # Subcommand Handlers
 # -------------------------------------------------------------------------
 
+def format_device_table(devices: List[Any]) -> str:
+    """Renders a clean, formatted ASCII table of discovered Android TV devices."""
+    if not devices:
+        return "No devices discovered."
+
+    headers = ("#", "IP Address", "Port", "Device Name / Model", "Type", "Source")
+    rows: List[Tuple[str, str, str, str, str, str]] = []
+    for idx, dev in enumerate(devices, 1):
+        name = getattr(dev, "model", "") or getattr(dev, "hostname", "") or "Android TV"
+        dtype = getattr(dev, "device_type", "android_tv")
+        src = getattr(dev, "source", "mDNS")
+        rows.append((str(idx), str(getattr(dev, "ip", "")), str(getattr(dev, "port", 5555)), name, dtype, src))
+
+    col_widths = [len(h) for h in headers]
+    for row in rows:
+        for i, val in enumerate(row):
+            col_widths[i] = max(col_widths[i], len(val))
+
+    sep = "+-" + "-+-".join("-" * w for w in col_widths) + "-+"
+    header_line = "| " + " | ".join(f"{h:<{col_widths[i]}}" for i, h in enumerate(headers)) + " |"
+
+    lines = [sep, header_line, sep]
+    for row in rows:
+        lines.append("| " + " | ".join(f"{val:<{col_widths[i]}}" for i, val in enumerate(row)) + " |")
+    lines.append(sep)
+    return "\n".join(lines)
+
+
+def run_cli_discovery(
+    args: argparse.Namespace,
+    adb: AdbClient,
+    runner: Callable,
+    timeout: float = 3.0,
+    auto_prompt: bool = True,
+) -> int:
+    """Executes network auto-discovery, table formatting, and interactive connection."""
+    try:
+        from opentv.core.discovery import discover_devices
+    except ImportError as exc:
+        print(f"Error: Discovery module unavailable: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+    is_json = getattr(args, "json", False)
+    if not is_json:
+        print(f"Scanning local network for Android TV devices (mDNS & SSDP, timeout={timeout:.1f}s)...")
+
+    try:
+        devices = discover_devices(timeout=timeout)
+    except Exception as exc:
+        print(f"Discovery error: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+    if is_json:
+        serialized = [d.to_dict() if hasattr(d, "to_dict") else vars(d) for d in devices]
+        print(json.dumps(serialized, indent=2))
+        return EXIT_SUCCESS
+
+    if not devices:
+        print(f"\nNo Android TV devices discovered within {timeout:.1f}s.")
+        print("Ensure TV is powered on, connected to the same subnet, and has Network Debugging enabled.")
+        print("You can connect directly via: opentv connect <IP>:5555")
+        return EXIT_DEVICE_NOT_FOUND
+
+    print(f"\nDiscovered {len(devices)} Android TV device(s):")
+    print(format_device_table(devices))
+
+    if not auto_prompt:
+        print("\nTo connect to a device, run: opentv connect <IP>:5555")
+        return EXIT_SUCCESS
+
+    is_atty = hasattr(sys.stdin, "isatty") and sys.stdin.isatty()
+    if not is_atty:
+        print(f"\nNon-interactive shell: connect with: opentv connect {devices[0].ip}:{devices[0].port}")
+        return EXIT_SUCCESS
+
+    # Interactive selection loop
+    while True:
+        try:
+            choice = input(f"\nSelect a TV to connect [1-{len(devices)}] (or [q] to quit, default: 1): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nOperation cancelled.")
+            return EXIT_SUCCESS
+
+        if not choice:
+            choice = "1"
+
+        if choice.lower() in ("q", "quit", "exit"):
+            print("Cancelled.")
+            return EXIT_SUCCESS
+
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(devices):
+                selected = devices[idx]
+                break
+
+        print(f"Invalid selection: '{choice}'. Enter a number from 1 to {len(devices)}.")
+
+    dm = DeviceManager(adb_wrapper=adb, runner=runner)
+    print(f"Connecting to {selected.ip}:{selected.port}...")
+    success, message = dm.connect(selected.ip, port=selected.port, timeout=getattr(args, "timeout", 10.0))
+    if success:
+        print(f"Successfully connected to {selected.ip}:{selected.port}")
+        return EXIT_SUCCESS
+    else:
+        print(f"Connection failed: {message}", file=sys.stderr)
+        return EXIT_ERROR
+
+
 def handle_connect(args: argparse.Namespace, adb: AdbClient, runner: Callable) -> int:
-    """Connect to wireless TV target."""
+    """Connect to wireless TV target, supporting local network discovery."""
+    if getattr(args, "discover", None) is not None or not getattr(args, "target", None):
+        if getattr(args, "discover_timeout", None) is not None:
+            timeout = float(args.discover_timeout)
+        elif getattr(args, "discover", None) is not None and args.discover is not True:
+            try:
+                timeout = float(args.discover)
+            except (ValueError, TypeError):
+                timeout = 3.0
+        else:
+            timeout = 3.0
+        return run_cli_discovery(args, adb, runner, timeout=timeout, auto_prompt=True)
+
     dm = DeviceManager(adb_wrapper=adb, runner=runner)
     try:
         host, port = parse_target_address(args.target, default_port=args.port, adb=adb)
@@ -133,6 +261,14 @@ def handle_connect(args: argparse.Namespace, adb: AdbClient, runner: Callable) -
     else:
         print(f"Connection failed: {message}", file=sys.stderr)
         return EXIT_ERROR
+
+
+def handle_discover(args: argparse.Namespace, adb: AdbClient, runner: Callable) -> int:
+    """Standalone discovery subcommand handler."""
+    timeout = getattr(args, "timeout", 3.0)
+    auto_prompt = getattr(args, "connect", False)
+    return run_cli_discovery(args, adb, runner, timeout=timeout, auto_prompt=auto_prompt)
+
 
 
 def handle_pair(args: argparse.Namespace, adb: AdbClient, runner: Callable) -> int:
@@ -208,11 +344,16 @@ def handle_list_apps(args: argparse.Namespace, adb: AdbClient, runner: Callable)
         annotated: List[Dict[str, Any]] = []
         for pkg in packages:
             entry = safety_db.classify(pkg)
+            meta = get_app_metadata(pkg)
+            friendly_name = meta.name if entry.human_name in (pkg, "") else entry.human_name
             annotated.append({
                 "package": pkg,
                 "category": entry.category.value,
-                "name": entry.human_name,
+                "name": friendly_name,
+                "genre": meta.category,
+                "functional_genre": meta.category,
                 "brand": entry.brand,
+                "is_known": meta.is_known,
             })
 
         if args.json:
@@ -225,12 +366,17 @@ def handle_list_apps(args: argparse.Namespace, adb: AdbClient, runner: Callable)
         # Formatted category table
         for item in annotated:
             cat_tag = f"[{item['category'].upper():<6}]"
-            print(f"{cat_tag} {item['package']} ({item['name']})")
+            genre_tag = f"[{item['genre']}]"
+            print(f"{cat_tag} {genre_tag} [{item['name']}] ({item['package']})")
         return EXIT_SUCCESS
 
-    # Standard plaintext listing
-    for pkg in packages:
-        print(pkg)
+    # Standard listing: raw or friendly formatted
+    if getattr(args, "raw", False):
+        for pkg in packages:
+            print(pkg)
+    else:
+        for pkg in packages:
+            print(format_app_display(pkg))
     return EXIT_SUCCESS
 
 
@@ -398,6 +544,16 @@ def handle_deploy(args: argparse.Namespace, adb: AdbClient, runner: Callable) ->
 
 def handle_debloat(args: argparse.Namespace, adb: AdbClient, runner: Callable) -> int:
     """Disables safe or selected packages with guardrails and rollback script generation."""
+    if getattr(args, "update_definitions", False):
+        from opentv.debloat.database import update_definitions
+        success, message, count = update_definitions(source=getattr(args, "source", None))
+        if success:
+            print(f"Definitions update successful: {message} ({count} packages)")
+            return EXIT_SUCCESS
+        else:
+            print(f"Definitions update failed: {message}", file=sys.stderr)
+            return EXIT_ERROR
+
     target = resolve_target_device(args.target, adb, runner)
     if not target:
         print("Error: Target device required for debloat operations.", file=sys.stderr)
@@ -460,7 +616,7 @@ def handle_debloat(args: argparse.Namespace, adb: AdbClient, runner: Callable) -
     if violations:
         print("\n--- Guardrails Shield Warnings ---")
         for pkg, reason in violations:
-            print(f"[BLOCKED] {pkg}: {reason}")
+            print(f"[BLOCKED] {format_app_display(pkg, include_category=False)}: {reason}")
         print("----------------------------------\n")
 
     if not permitted:
@@ -472,7 +628,7 @@ def handle_debloat(args: argparse.Namespace, adb: AdbClient, runner: Callable) -
         print(f"Permitted packages to disable ({len(permitted)}):")
         for p in permitted:
             entry = safety_db.classify(p, brand_id=brand_profile.brand_id)
-            print(f"  - {p} ({entry.human_name}) [Category: {entry.category.value}]")
+            print(f"  - {format_app_display(p, safety_label=entry.category.value.upper())}")
         print("\nDry run mode active. No changes were made to the device.")
         return EXIT_SUCCESS
 
@@ -504,10 +660,10 @@ def handle_debloat(args: argparse.Namespace, adb: AdbClient, runner: Callable) -
                 target_device=target,
             )
             runner(append_cmd)
-            print(f"  [DISABLED] {pkg}")
+            print(f"  [DISABLED] {format_app_display(pkg, include_category=False)}")
         else:
             failed_count += 1
-            print(f"  [FAILED]   {pkg}: {stderr.strip() or stdout.strip()}", file=sys.stderr)
+            print(f"  [FAILED]   {format_app_display(pkg, include_category=False)}: {stderr.strip() or stdout.strip()}", file=sys.stderr)
 
         audit_logger.record_disable(
             device_id=target,
@@ -695,9 +851,37 @@ Examples:
 
     # 1. connect
     p_connect = subparsers.add_parser("connect", parents=[common_sub], help="Connect to a wireless Android TV device")
-    p_connect.add_argument("target", type=str, help="Device IP or IP:port (e.g. 192.168.1.50 or 192.168.1.50:5555)")
+    p_connect.add_argument(
+        "target",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Device IP or IP:port (e.g. 192.168.1.50 or 192.168.1.50:5555). Optional if --discover is specified.",
+    )
     p_connect.add_argument("-p", "--port", type=int, default=5555, help="Port if omitted from target (default: 5555)")
     p_connect.add_argument("--timeout", type=float, default=10.0, help="Connection timeout in seconds (default: 10.0)")
+    p_connect.add_argument(
+        "-d",
+        "--discover",
+        nargs="?",
+        const=3.0,
+        type=float,
+        default=None,
+        metavar="TIMEOUT",
+        help="Discover Android TV devices on local network via mDNS & SSDP (default timeout: 3.0s)",
+    )
+    p_connect.add_argument(
+        "--discover-timeout",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Timeout for device discovery scan in seconds (default: 3.0)",
+    )
+    p_connect.add_argument(
+        "--json",
+        action="store_true",
+        help="Output discovered devices as JSON (when used with --discover)",
+    )
 
     # 2. pair
     p_pair = subparsers.add_parser("pair", parents=[common_sub], help="Pair with Android 11+ Wi-Fi debugging target")
@@ -710,6 +894,7 @@ Examples:
     p_list.add_argument("-s", "--system", action="store_true", help="List only system packages")
     p_list.add_argument("-u", "--user", action="store_true", help="List only 3rd-party user packages")
     p_list.add_argument("-l", "--launchable", action="store_true", help="Filter to only apps with TV Leanback launcher activities")
+    p_list.add_argument("--raw", action="store_true", help="Output unformatted package IDs only (for shell piping)")
     p_list.add_argument("--json", action="store_true", help="Output results formatted as JSON")
     p_list.add_argument("--categories", action="store_true", help="Annotate packages with safety categories (never, keep, safe, review)")
 
@@ -744,6 +929,8 @@ Examples:
     p_debloat.add_argument("--force-google-tv", action="store_true", help="Force disabling launcherx on Google TV (bypassing bootloop shield)")
     p_debloat.add_argument("--output-dir", type=str, default=".", help="Directory to save rollback scripts and audit log")
     p_debloat.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompts")
+    p_debloat.add_argument("--update-definitions", action="store_true", help="Update debloat safety definitions from remote repository or local file")
+    p_debloat.add_argument("--source", type=str, default=None, help="Custom URL or local file path for updating definitions")
 
     # 7. rollback
     p_rollback = subparsers.add_parser("rollback", parents=[common_sub], help="Generate rollback recovery scripts or restore packages")
@@ -756,14 +943,20 @@ Examples:
     p_tui = subparsers.add_parser("tui", parents=[common_sub], help="Launch interactive Terminal UI")
     p_tui.add_argument("--fallback", action="store_true", help="Force line-oriented fallback mode")
 
+    # 9. discover
+    p_discover = subparsers.add_parser("discover", parents=[common_sub], help="Scan local network for Android TV devices")
+    p_discover.add_argument("--timeout", type=float, default=3.0, help="Discovery timeout in seconds (default: 3.0)")
+    p_discover.add_argument("--json", action="store_true", help="Output discovered devices as JSON")
+    p_discover.add_argument("-c", "--connect", action="store_true", help="Prompt to immediately connect to a discovered device")
+
     return parser
 
 
-def main(
+def _main_dispatch(
     argv: Optional[List[str]] = None,
     runner: Optional[Callable[[List[str]], Tuple[int, str, str]]] = None,
 ) -> int:
-    """Primary CLI entry point. Parses args and dispatches to subcommand handlers."""
+    """Internal CLI argument parser and command dispatcher."""
     parser = create_parser()
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
@@ -776,10 +969,11 @@ def main(
             return EXIT_SUCCESS
 
     active_runner = runner or default_subprocess_runner
-    adb = AdbClient(adb_path=args.adb_path, default_device=args.target)
+    adb = AdbClient(adb_path=args.adb_path, default_device=getattr(args, "target", None))
 
     dispatch_table: Dict[str, Callable[[argparse.Namespace, AdbClient, Callable], int]] = {
         "connect": handle_connect,
+        "discover": handle_discover,
         "pair": handle_pair,
         "list-apps": handle_list_apps,
         "configure": handle_configure,
@@ -809,3 +1003,16 @@ def main(
         else:
             print(f"Error: {exc}", file=sys.stderr)
         return EXIT_ERROR
+
+
+def main(
+    argv: Optional[List[str]] = None,
+    runner: Optional[Callable[[List[str]], Tuple[int, str, str]]] = None,
+    stdout: Optional[Any] = None,
+) -> int:
+    """Primary CLI entry point. Parses args and dispatches to subcommand handlers."""
+    if stdout is not None:
+        with contextlib.redirect_stdout(stdout):
+            return _main_dispatch(argv, runner)
+    return _main_dispatch(argv, runner)
+

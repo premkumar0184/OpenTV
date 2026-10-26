@@ -292,6 +292,14 @@ public class MainActivity extends Activity implements FocusController.FocusCallb
                 } catch (Exception ignored) {}
             }
 
+            // Sideloaded app banner generator: synthesize 16:9 banner canvas from app icon
+            if (banner == null && icon != null) {
+                try {
+                    banner = BannerGenerator.getInstance().getOrCreateBannerDrawable(
+                            getResources(), pkg, label, icon, tileW, tileH);
+                } catch (Exception ignored) {}
+            }
+
             View card = addTile(root, pkg, label, banner, null, icon, gridX(i), gridY(i), tileW, tileH, true);
             appCards.add(card);
         }

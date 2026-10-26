@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from opentv.core.adb import AdbClient, AdbDevice, AdbWrapper
+from opentv.core.app_names import get_app_name
 from opentv.profiles.detector import BrandProfile, detect_brand_profile
 
 
@@ -168,10 +169,10 @@ class DeviceManager:
     ) -> Tuple[int, str, str]:
         """Executes an ADB command via injected runner or standard subprocess."""
         if self.runner is not None:
-            if hasattr(self.runner, "execute"):
-                return self.runner.execute(cmd)
-            elif callable(self.runner):
+            if callable(self.runner):
                 return self.runner(cmd)
+            elif hasattr(self.runner, "execute"):
+                return self.runner.execute(cmd)
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
             return (res.returncode, res.stdout, res.stderr)
@@ -585,7 +586,7 @@ class DeviceManager:
                     package_name=pkg,
                     is_system=is_sys,
                     is_enabled=is_en,
-                    app_label=pkg.split(".")[-1].replace("_", " ").title(),
+                    app_label=get_app_name(pkg),
                     launchable_activity=launch_act,
                     is_tv_app=is_tv,
                 )

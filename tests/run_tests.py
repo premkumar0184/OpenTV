@@ -18,13 +18,20 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
 
 TIER_FILES: dict[int, list[str]] = {
-    1: ["test_tier1_feature_coverage.py"],
+    1: [
+        "test_tier1_feature_coverage.py",
+        "test_discovery.py",
+        "test_app_names.py",
+        "test_packaging.py",
+        "test_dynamic_definitions.py",
+    ],
     2: ["test_tier2_boundary_cases.py"],
     3: ["test_tier3_combinations.py"],
     4: ["test_tier4_scenarios.py"],
     5: [
         "test_tier5_adversarial_hardening.py",
         "test_tier5_core_tui_hardening.py",
+        "test_discovery_adversarial.py",
     ],
 }
 

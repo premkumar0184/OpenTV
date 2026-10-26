@@ -5,8 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Android](https://img.shields.io/badge/Android-5.0%2B%20(API%2021--34)-green.svg)](https://developer.android.com)
 [![Python](https://img.shields.io/badge/Python-3.8%2B%20(Zero%20Deps)-yellow.svg)](https://www.python.org)
-[![APK Size](https://img.shields.io/badge/APK%20Size-~49%20KB-success.svg)](app-release.apk)
-[![Tests](https://img.shields.io/badge/Tests-235%2F235%20Passing-brightgreen.svg)](tests/)
+[![Release](https://img.shields.io/badge/Release-GitHub%20Releases-blue.svg)](https://github.com/premkumar0184/OpenTV/releases)
+[![APK Size](https://img.shields.io/badge/APK%20Size-~53%20KB-success.svg)](https://github.com/premkumar0184/OpenTV/releases)
+[![Tests](https://img.shields.io/badge/Python%20Tests-442%2F442%20Passing-brightgreen.svg)](tests/)
+[![Java Tests](https://img.shields.io/badge/Java%20Tests-38%2F38%20Passing-brightgreen.svg)](app/)
 
 ---
 
@@ -25,12 +27,35 @@ Modern Smart TVs (Android TV and Google TV) have become cluttered with unskippab
 ## ✨ Features
 
 - **📺 Minimalist Home Screen**: A clean, lightning-fast app grid with live HDMI input switching (`TvInputManager`), customizable quick-settings shortcuts, clock, and OLED burn-in prevention.
+- **🖼️ Dynamic Sideload Banner Generator**: Automatically synthesizes 16:9 landscape banners for mobile/tablet apps lacking Leanback banners (`BannerGenerator.java`), featuring primary palette gradient extraction from the app icon and in-memory LRU caching for buttery 60fps scrolling.
 - **🎮 100% Remote-Controlled**: Built from the ground up for standard TV remote D-pads (Up, Down, Left, Right, OK, Back). Press and hold OK on any tile to Move, Replace, or Remove apps.
-- **💻 Cross-Platform Companion**: Pure Python 3 standard library CLI and interactive Terminal UI (TUI) running natively on **Linux, macOS, and Windows** (PowerShell / CMD) with **zero `pip` dependencies**.
+- **📡 ZeroConf & mDNS Local Auto-Discovery**: Automatically scans and discovers Android TV / Google TV devices on your local network via mDNS and SSDP without needing to hunt for IP addresses.
+- **🏷️ Friendly App Metadata Engine**: Built-in resolution for ~350 popular TV packages into human-readable titles, functional genres (Streaming, Audio, Gaming, Utilities), and smart tokenizer fallbacks.
+- **💻 Cross-Platform Companion**: Pure Python 3 standard library CLI and interactive Terminal UI (TUI) running natively on **Linux, macOS, and Windows** (PowerShell / CMD) with **zero `pip` dependencies**, plus standalone single-file executables (`opentv.pyz` and native binaries).
+- **🔄 Dynamic Debloat Definitions & Remote Sync**: Update debloat catalogs on the fly (`--update-definitions`) while maintaining an unbypassable immutable shield protecting critical system components.
 - **🏷️ Model & OEM Profiles**: Tailored hardware adapters and debloat catalogs for **Sony, TCL, Philips, Hisense, Xiaomi, Chromecast with Google TV, Nvidia Shield**, and generic devices.
 - **🛡️ 10-Layer Safety Guardrails**: Strictly prevents device bricking or bootloops (e.g. preserves `com.google.android.apps.tv.launcherx` on Google TV devices).
 - **↩️ Standalone Rollback**: Generates executable recovery scripts ([`rollback.sh`](rollback.sh), [`rollback.bat`](rollback.bat), [`rollback.ps1`](rollback.ps1)) that restore disabled apps and the stock launcher anytime without Python.
-- **⚡ Featherweight Footprint**: The signed launcher APK ([`app-release.apk`](app-release.apk)) is **under 50 KB**.
+- **⚡ Featherweight Footprint**: The signed launcher APK ([`opentv.apk`](https://github.com/premkumar0184/OpenTV/releases)) is **under 54 KB**.
+
+---
+
+## 📦 Downloads & Official Releases
+
+Pre-compiled, cryptographically signed release binaries and standalone companion archives are automatically built, verified, and published on **[GitHub Releases](https://github.com/premkumar0184/OpenTV/releases)** for every release version tag (`v*`):
+
+| Release Asset | Description | Target Platform | Link |
+|---|---|---|---|
+| **`opentv.apk`** | Signed, standalone Android TV launcher APK (<60 KB, v1+v2+v3 signatures). Ready for sideloading. | Android TV / Google TV (API 21+) | [Download Latest](https://github.com/premkumar0184/OpenTV/releases) |
+| **`opentv.pyz`** | Zero-dependency standalone Python zipapp executable archive (~85 KB). Run directly with `python3 opentv.pyz`. | Linux, macOS, Windows | [Download Latest](https://github.com/premkumar0184/OpenTV/releases) |
+| **`opentv-companion.tar.gz`** | Complete companion manager archive with source, rollback scripts, and documentation. | Linux, macOS, Windows | [Download Latest](https://github.com/premkumar0184/OpenTV/releases) |
+| **`SHA256SUMS.txt`** | Cryptographic SHA-256 checksums for verifying binary integrity before sideloading or execution. | All Platforms | [Download Latest](https://github.com/premkumar0184/OpenTV/releases) |
+
+### Integrity Verification
+Verify downloaded assets against published checksums:
+```bash
+sha256sum -c SHA256SUMS.txt
+```
 
 ---
 
@@ -68,13 +93,14 @@ OpenTV can also be controlled directly via scriptable CLI commands:
 
 | Command | Description | Example |
 |---|---|---|
-| `connect` | Connect to TV over network or USB ADB | `python3 -m opentv connect 192.168.1.50:5555` |
+| `discover` | Scan local network for Android TV devices via mDNS & SSDP | `python3 -m opentv discover` |
+| `connect` | Connect to TV over network or auto-discover | `python3 -m opentv connect --discover` |
 | `pair` | Pair with TV via Android 11+ wireless code | `python3 -m opentv pair 192.168.1.50:38450 123456` |
-| `list-apps` | List installed applications on TV | `python3 -m opentv list-apps --filter user` |
+| `list-apps` | List installed apps with friendly names & genres | `python3 -m opentv list-apps --categories` |
 | `configure` | Push custom app grid and shortcuts | `python3 -m opentv configure --apps com.netflix.ninja,com.youtube.tv` |
-| `deploy` | Install launcher APK & verify Home default | `python3 -m opentv deploy` |
-| `debloat` | Disable vendor bloatware safely | `python3 -m opentv debloat --preset safe --dry-run` |
-| `rollback` | Restore all disabled packages & stock launcher | `python3 -m opentv rollback` |
+| `deploy` | Install launcher APK & verify Home default | `python3 -m opentv deploy --set-home` |
+| `debloat` | Safely disable vendor bloatware or update definitions | `python3 -m opentv debloat --safe-only --dry-run` |
+| `rollback` | Restore all disabled packages & stock launcher | `python3 -m opentv rollback --execute` |
 | `tui` | Launch full interactive terminal UI | `python3 -m opentv tui` |
 
 ---
@@ -134,10 +160,13 @@ gradle :app:assembleRelease
 OpenTV includes a complete automated test harness running without external dependencies:
 
 ```bash
-# Run all 5 tiers of automated E2E tests (235 tests in <0.1s)
+# Run all 5 tiers of automated E2E tests (404 tests in <1.5s)
 python3 tests/run_tests.py
 
-# Run Java launcher unit tests (30 tests)
+# Run full discovery test suite across all modules (442 tests)
+python3 -m unittest discover -s tests
+
+# Run Java launcher unit tests (38 tests)
 gradle test
 ```
 
@@ -147,9 +176,11 @@ gradle test
 
 ```
 OpenTV/
+├── .github/workflows/          # CI/CD Workflows (Multi-OS CI, Android build, Lint, Release)
 ├── app/                        # Android TV Native Launcher (Java 8, API 21+)
 │   ├── src/main/java/org/opentv/launcher/
 │   │   ├── MainActivity.java   # App grid, D-pad focus, remote editing
+│   │   ├── BannerGenerator.java# 16:9 sideload banner synthesizer & LRU cache
 │   │   ├── FocusController.java# Spatial navigation & Move Mode
 │   │   ├── TvInputHelper.java  # Live HDMI inputs discovery & switching
 │   │   ├── VendorAdapter.java  # TCL, Philips, Sony hardware adapters
@@ -157,19 +188,19 @@ OpenTV/
 │   └── build.sh                # Standalone AAPT2/D8/apksigner build script
 ├── companion/                  # Cross-Platform Python Companion (Zero pip deps)
 │   └── opentv/
-│       ├── core/               # ADB client, device state, config engine
-│       ├── debloat/            # Safety database, 10-layer guardrails, rollback
+│       ├── core/               # ADB client, device state, config, app names & mDNS discovery
+│       ├── debloat/            # Safety database, 10-layer guardrails, sync & rollback
 │       ├── profiles/           # OEM brand detectors and device profiles
 │       ├── tui/                # Interactive ANSI terminal UI & line fallback
 │       └── cli.py              # CLI subcommand dispatcher
-├── tests/                      # 5-tier test suite (235 tests)
+├── dist/                       # Standalone binaries (opentv.pyz zipapp)
+├── scripts/                    # Packaging & native build automation scripts
+├── tests/                      # 5-tier test suite (442 tests)
 ├── docs/                       # In-depth technical documentation
-├── app-release.apk             # Pre-built signed launcher APK (~49 KB)
 ├── rollback.sh                 # Standalone POSIX rollback script
 ├── rollback.bat                # Standalone Windows Batch rollback script
 ├── rollback.ps1                # Standalone PowerShell rollback script
 ├── LICENSE                     # MIT License
-└── README.md
 ```
 
 ---

@@ -11,10 +11,14 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import sys
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 
 class SafetyCategory(str, Enum):
@@ -239,6 +243,142 @@ CURATED_PACKAGES: Dict[str, PackageEntry] = {
     "com.nvidia.ota": PackageEntry("com.nvidia.ota", SafetyCategory.SAFE, "Shield OTA Notifier", "Promotional OS update banners", "nvidia"),
 }
 
+# Critical packages that can NEVER be downgraded to SAFE or KEEP
+IMMUTABLE_NEVER_PACKAGES: Set[str] = {
+    pkg for pkg, entry in CURATED_PACKAGES.items() if entry.category == SafetyCategory.NEVER
+}
+IMMUTABLE_NEVER_PACKAGES.update({
+    "android",
+    "com.android.systemui",
+    "com.android.settings",
+    "com.android.tv.settings",
+    "com.android.shell",
+    "com.android.packageinstaller",
+    "com.google.android.packageinstaller",
+    "com.google.android.permissioncontroller",
+    "com.google.android.apps.tv.launcherx",
+})
+
+DEFAULT_DEFINITIONS_URL = (
+    "https://raw.githubusercontent.com/premkumar0184/OpenTV/main/companion/opentv/debloat/definitions.json"
+)
+
+
+def get_definitions_cache_path() -> Path:
+    """
+    Returns platform-specific configuration path for cached debloat definitions.
+    - Windows: %APPDATA%/OpenTV/definitions.json (fallback ~/.config/opentv/definitions.json)
+    - POSIX / macOS: $XDG_CONFIG_HOME/opentv/definitions.json (fallback ~/.config/opentv/definitions.json)
+    """
+    if sys.platform == "win32":
+        app_data = os.environ.get("APPDATA")
+        if app_data:
+            return Path(app_data) / "OpenTV" / "definitions.json"
+        return Path.home() / "AppData" / "Roaming" / "OpenTV" / "definitions.json"
+    xdg_config = os.environ.get("XDG_CONFIG_HOME")
+    if xdg_config:
+        return Path(xdg_config) / "opentv" / "definitions.json"
+    return Path.home() / ".config" / "opentv" / "definitions.json"
+
+
+def update_definitions(
+    source: Optional[str] = None,
+    cache_path: Optional[Path] = None,
+    timeout: float = 10.0,
+) -> Tuple[bool, str, int]:
+    """
+    Downloads or copies debloat definitions and stores them in the cache path.
+    Validates JSON schema and enforces immutable NEVER guardrails.
+    Returns (success, message, package_count).
+    """
+    if cache_path is None:
+        cache_path = get_definitions_cache_path()
+
+    src = source if source is not None else DEFAULT_DEFINITIONS_URL
+    raw_content = ""
+
+    try:
+        if src.startswith("http://") or src.startswith("https://"):
+            req = urllib.request.Request(
+                src,
+                headers={"User-Agent": "OpenTV-Companion/1.0 (Python urllib)"},
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw_content = resp.read().decode("utf-8")
+        else:
+            src_path = Path(src)
+            if not src_path.is_file():
+                return False, f"Source definitions file not found: {src}", 0
+            with open(src_path, "r", encoding="utf-8") as f:
+                raw_content = f.read()
+
+        data = json.loads(raw_content)
+    except urllib.error.URLError as err:
+        return False, f"Network error downloading definitions: {err.reason}", 0
+    except json.JSONDecodeError as err:
+        return False, f"Invalid JSON format in definitions: {err}", 0
+    except Exception as err:
+        return False, f"Failed to read definitions: {err}", 0
+
+    if not isinstance(data, dict):
+        return False, "Definitions root must be a JSON object", 0
+
+    items = data.get("overrides", data.get("packages"))
+    if items is None:
+        return False, "Definitions must contain 'packages' or 'overrides' key", 0
+
+    valid_entries: List[Dict[str, Any]] = []
+    rejected_immutable = 0
+
+    if isinstance(items, list):
+        for item in items:
+            if not isinstance(item, dict) or "package_name" not in item:
+                continue
+            pkg = item["package_name"]
+            cat_str = item.get("category", "")
+            if pkg in IMMUTABLE_NEVER_PACKAGES and cat_str.lower() != SafetyCategory.NEVER.value:
+                rejected_immutable += 1
+                continue
+            valid_entries.append(item)
+    elif isinstance(items, dict):
+        for pkg, info in items.items():
+            if not isinstance(info, dict):
+                continue
+            cat_str = info.get("category", "")
+            if pkg in IMMUTABLE_NEVER_PACKAGES and cat_str.lower() != SafetyCategory.NEVER.value:
+                rejected_immutable += 1
+                continue
+            item = dict(info)
+            item["package_name"] = pkg
+            valid_entries.append(item)
+    else:
+        return False, "'packages' must be a list or dictionary", 0
+
+    if not valid_entries:
+        return False, "No valid package definitions found to update", 0
+
+    output_data = {
+        "version": data.get("version", "1.0.0"),
+        "updated_at": data.get("updated_at", ""),
+        "packages": valid_entries,
+    }
+
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_file = cache_path.with_suffix(".tmp")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump(output_data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        temp_file.replace(cache_path)
+    except Exception as err:
+        return False, f"Failed to write cache file {cache_path}: {err}", 0
+
+    msg = f"Updated {len(valid_entries)} package definitions"
+    if rejected_immutable > 0:
+        msg += f" ({rejected_immutable} dangerous overrides blocked by immutable guardrails)"
+    return True, msg, len(valid_entries)
+
 
 class PackageSafetyDB:
     """
@@ -250,6 +390,7 @@ class PackageSafetyDB:
         self,
         catalog: Optional[Dict[str, PackageEntry]] = None,
         custom_overrides_path: Optional[Union[str, Path]] = None,
+        auto_load_cache: bool = True,
     ):
         if catalog is not None:
             self._catalog: Dict[str, PackageEntry] = dict(catalog)
@@ -258,6 +399,10 @@ class PackageSafetyDB:
 
         if custom_overrides_path:
             self.load_custom_overrides(custom_overrides_path)
+        elif auto_load_cache and catalog is None:
+            cache_p = get_definitions_cache_path()
+            if cache_p.is_file():
+                self.load_custom_overrides(cache_p)
 
     def classify(self, package_name: str, brand_id: str = "generic") -> PackageEntry:
         """
@@ -298,11 +443,22 @@ class PackageSafetyDB:
         """Backward-compatible alias for get_safe_candidates()."""
         return self.get_safe_candidates(installed_packages, brand)
 
-    def add_custom_entry(self, entry: PackageEntry) -> None:
-        """Adds or updates a package entry in the catalog."""
+    def add_custom_entry(self, entry: PackageEntry, enforce_immutable: bool = True) -> bool:
+        """
+        Adds or updates a package entry in the catalog.
+        Returns False if rejected by immutable NEVER guardrails.
+        """
+        if enforce_immutable and entry.package_name in IMMUTABLE_NEVER_PACKAGES:
+            if entry.category != SafetyCategory.NEVER:
+                return False
         self._catalog[entry.package_name] = entry
+        return True
 
-    def load_custom_overrides(self, source: Union[str, Path, Dict[str, Any]]) -> int:
+    def load_custom_overrides(
+        self,
+        source: Union[str, Path, Dict[str, Any]],
+        enforce_immutable: bool = True,
+    ) -> int:
         """
         Loads custom package rules from a JSON file or dictionary.
         Returns the count of entries added/overridden.
@@ -324,16 +480,16 @@ class PackageSafetyDB:
             for item in items:
                 if isinstance(item, dict) and "package_name" in item:
                     entry = PackageEntry.from_dict(item)
-                    self.add_custom_entry(entry)
-                    count += 1
+                    if self.add_custom_entry(entry, enforce_immutable=enforce_immutable):
+                        count += 1
         elif isinstance(items, dict):
             for pkg, info in items.items():
                 if isinstance(info, dict):
                     info_copy = dict(info)
                     info_copy["package_name"] = pkg
                     entry = PackageEntry.from_dict(info_copy)
-                    self.add_custom_entry(entry)
-                    count += 1
+                    if self.add_custom_entry(entry, enforce_immutable=enforce_immutable):
+                        count += 1
         return count
 
     def get_packages_by_category(

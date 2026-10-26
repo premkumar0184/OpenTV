@@ -1,0 +1,152 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'build.sh'
+      - '.github/workflows/android.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'build.sh'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android-ci:
+    name: Build & Test Android Launcher
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: |
+            platform-tools
+            cmdline-tools;latest
+            platforms;android-34
+            platforms;android-35
+            build-tools;34.0.0
+            build-tools;35.0.0
+
+      - name: Verify Android SDK & Tools
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          ls -la "$ANDROID_HOME/platforms"
+          ls -la "$ANDROID_HOME/build-tools"
+
+      # -----------------------------------------------------------------------
+      # 1. Gradle Unit Tests (JUnit 4)
+      # -----------------------------------------------------------------------
+      - name: Run Java Unit Tests with Gradle
+        run: |
+          echo "=== Executing Java Unit Tests ==="
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew test --no-daemon --info
+          else
+            gradle test --no-daemon --info
+          fi
+
+      - name: Upload Java Unit Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-unit-test-reports
+          path: app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
+
+      # -----------------------------------------------------------------------
+      # 2. Gradle Release Build & Lint Vital
+      # -----------------------------------------------------------------------
+      - name: Assemble Release APK with Gradle
+        run: |
+          echo "=== Assembling Release APK with Gradle & Running Lint ==="
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            gradle assembleRelease --no-daemon
+          fi
+
+      - name: Verify Gradle Release APK Signature
+        run: |
+          echo "=== Verifying Gradle APK Signature with apksigner ==="
+          BT=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK_PATH" || { echo "Error: $APK_PATH not found" >&2; exit 1; }
+          "$BT/apksigner" verify --verbose "$APK_PATH"
+
+      - name: Upload Gradle Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentv-gradle-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      # -----------------------------------------------------------------------
+      # 3. Standalone Zero-Gradle Build (app/build.sh)
+      # -----------------------------------------------------------------------
+      - name: Execute Standalone Build Script (app/build.sh)
+        run: |
+          echo "=== Executing Standalone Reproducible Build Pipeline ==="
+          chmod +x app/build.sh
+          ./app/build.sh
+
+      - name: Verify Standalone APK Signature
+        run: |
+          echo "=== Verifying Standalone APK Signature with apksigner ==="
+          test -f app-release.apk || { echo "ERROR: app-release.apk not found!" >&2; exit 1; }
+          BT=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+          "$BT/apksigner" verify --verbose app-release.apk
+
+      - name: Verify Release APK Footprint (< 60 KB Ceiling)
+        run: |
+          echo "=== Enforcing Release APK Footprint Ceiling (< 60 KB) ==="
+          test -f app-release.apk || { echo "ERROR: app-release.apk not found!" >&2; exit 1; }
+          test -s app-release.apk || { echo "ERROR: app-release.apk is empty (0 bytes)!" >&2; exit 1; }
+          APK_SIZE=$(stat -c%s app-release.apk 2>/dev/null || stat -f%z app-release.apk 2>/dev/null)
+          test -n "$APK_SIZE" && [ "$APK_SIZE" -gt 0 ] 2>/dev/null || { echo "ERROR: Failed to determine valid APK size: '$APK_SIZE'" >&2; exit 1; }
+          MAX_SIZE=61440 # 60 * 1024 bytes
+          echo "Standalone APK Size: $APK_SIZE bytes (ceiling: $MAX_SIZE bytes / 60 KB)"
+          if [ "$APK_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "ERROR: Standalone APK size ($APK_SIZE bytes) exceeds the strict 60 KB limit ($MAX_SIZE bytes)!" >&2
+            exit 1
+          fi
+          echo "SUCCESS: Standalone APK ($APK_SIZE bytes) is within the 60 KB footprint limit."
+
+      - name: Upload Standalone Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentv-standalone-release-apk
+          path: app-release.apk
+          if-no-files-found: error

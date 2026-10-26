@@ -103,8 +103,15 @@ Every requirement and discovered feature is enumerated below with its assigned m
 | M2 | `M2_DEBLOAT_PROFILES` | Device Profiles & Safe Debloating Engine: Package safety DB, brand profiles (8 brands), guardrails engine, standalone rollback script generators, audit logging | none | DONE |
 | M3 | `M3_COMPANION_CLI_TUI` | Cross-Platform CLI / TUI Companion Manager: Pure Python ADB client, connection wizard, interactive TUI, layout manager, deployment & Home verification, CLI subcommands | M1, M2 | DONE |
 | M4 | `M4_DOCUMENTATION` | Comprehensive Developer & User Documentation: Complete README.md, quickstart, pairing guides, debloat safety guide, profile customization docs | M1, M2, M3 | DONE |
-| M5 | `M5_E2E_VERIFICATION_HARDENING` | Final Milestone: Pass 100% of E2E test suite published by E2E Testing Track (Tiers 1-4), followed by Tier 5 Adversarial Coverage Hardening | M1, M2, M3, TEST_READY | IN_PROGRESS |
+| M5 | `M5_E2E_VERIFICATION_HARDENING` | Pass 100% of E2E test suite published by E2E Testing Track (Tiers 1-4), followed by Tier 5 Adversarial Coverage Hardening | M1, M2, M3, TEST_READY | DONE |
 | E2E | `TRACK_E2E_TESTING` | Parallel E2E Testing Track: Test infra design (`TEST_INFRA.md`), 4-tier opaque-box test suite creation, publishes `TEST_READY.md` | none | DONE |
+| S1 | `CI_CD_WORKFLOWS` | Comprehensive multi-platform CI matrix testing across Ubuntu, macOS, Windows, and Python 3.8-3.14 + ShellCheck / Lint | none | DONE |
+| S2 | `RELEASE_AUTOMATION` | Binary decoupling, signed APK packaging, GitHub Releases automation, and SHA256 checksums | S1 | DONE |
+| S3 | `AUTODISCOVERY` | Pure-Python standard library mDNS & SSDP local TV discovery (`companion/opentv/core/discovery.py`) | none | DONE |
+| S4 | `APP_METADATA_ENGINE` | Curated app catalog (~350 apps), 9 taxonomy categories, smart tokenizer fallback (`app_names.py`) | none | DONE |
+| S5 | `STANDALONE_BINARIES` | Pure standard library `zipapp` packaging (`dist/opentv.pyz`), native binaries build scripts | S4 | DONE |
+| S6 | `DYNAMIC_DEFINITIONS` | Remote community sync (`--update-definitions`), JSON schema validator, immutable `NEVER` shield | S2 | DONE |
+| S7 | `SIDELOAD_BANNER_GEN` | Native 16:9 landscape banner generator with palette gradient extraction & LRU caching (<54 KB APK) | none | DONE |
 
 ## Interface Contracts
 

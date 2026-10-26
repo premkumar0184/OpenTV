@@ -5,6 +5,18 @@ app/out/
 *.class
 *.dex
 
+# Compiled binary artifacts & distribution packages
+*.apk
+*.aab
+*.jar
+*.zipapp
+app-release.apk
+opentv.apk
+dist/
+release/
+*.tar.gz
+SHA256SUMS.txt
+
 # Gradle
 .gradle/
 local.properties
