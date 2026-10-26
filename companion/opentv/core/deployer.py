@@ -121,12 +121,12 @@ class LauncherDeployer:
     ) -> Tuple[int, str, str]:
         """Executes an ADB command via injected runner or standard subprocess."""
         if self.runner is not None:
-            if hasattr(self.runner, "execute"):
-                return self.runner.execute(cmd)
-            elif callable(self.runner):
+            if callable(self.runner):
                 return self.runner(cmd)
+            elif hasattr(self.runner, "execute"):
+                return self.runner.execute(cmd)
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            res = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=timeout)
             return (res.returncode, res.stdout, res.stderr)
         except FileNotFoundError:
             return (127, "", f"ADB binary not found: '{cmd[0]}'")

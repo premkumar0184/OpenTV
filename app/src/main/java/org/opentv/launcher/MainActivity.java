@@ -175,8 +175,12 @@ public class MainActivity extends Activity implements FocusController.FocusCallb
     protected void onResume() {
         super.onResume();
         refreshNetwork();
-        if (focusController.getFocusedKey() == null && !appCards.isEmpty()) {
-            appCards.get(0).requestFocus();
+        if (focusController.getFocusedKey() == null) {
+            if (!appCards.isEmpty()) {
+                appCards.get(0).requestFocus();
+            } else if (!allTiles.isEmpty()) {
+                allTiles.get(0).requestFocus();
+            }
         }
     }
 

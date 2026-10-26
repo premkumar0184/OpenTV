@@ -49,6 +49,7 @@ public class TvInputHelper {
      */
     public static List<HdmiInput> queryHdmiInputs(Context context, int maxInputs) {
         List<HdmiInput> result = new ArrayList<>();
+        if (context == null) return result;
         TvInputManager tim = (TvInputManager) context.getSystemService(Context.TV_INPUT_SERVICE);
         if (tim == null) return result;
 
@@ -120,6 +121,9 @@ public class TvInputHelper {
      */
     public static List<Intent> buildLaunchIntents(Context context, String inputId) {
         List<Intent> intents = new ArrayList<>();
+        if (context == null || inputId == null || inputId.trim().isEmpty()) {
+            return intents;
+        }
         PackageManager pm = context.getPackageManager();
         Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
         Intent baseView = new Intent(Intent.ACTION_VIEW, uri);
@@ -151,13 +155,16 @@ public class TvInputHelper {
      * Executes the launch sequence across the 5-tier fallback chain.
      */
     public static boolean launchInput(Context context, String inputId) {
-        List<Intent> tries = buildLaunchIntents(context, inputId);
-        for (Intent intent : tries) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                context.startActivity(intent);
-                return true;
-            } catch (Exception ignored) {}
+        if (context == null) return false;
+        if (inputId != null && !inputId.trim().isEmpty()) {
+            List<Intent> tries = buildLaunchIntents(context, inputId);
+            for (Intent intent : tries) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    context.startActivity(intent);
+                    return true;
+                } catch (Exception ignored) {}
+            }
         }
 
         // Fallback: hardware KEYCODE_TV_INPUT broadcast

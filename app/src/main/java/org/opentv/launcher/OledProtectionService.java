@@ -26,13 +26,24 @@ public class OledProtectionService {
         {0, 0}, {1, 0}, {2, 1}, {1, 2}, {0, 2}, {-1, 1}, {-2, 0}, {-1, -1}, {0, -2}, {1, -1}
     };
 
-    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler;
     private Activity activity;
     private View[] shiftViews;
     private long inactivityTimeoutMs = DEFAULT_INACTIVITY_TIMEOUT_MS;
     private boolean pixelShiftEnabled = true;
     private int shiftIndex = 0;
     private boolean isDimmed = false;
+
+    public OledProtectionService() {
+        Handler h = null;
+        try {
+            Looper looper = Looper.getMainLooper();
+            if (looper != null) {
+                h = new Handler(looper);
+            }
+        } catch (Throwable ignored) {}
+        this.handler = h;
+    }
 
     private final Runnable inactivityRunnable = new Runnable() {
         @Override
@@ -45,7 +56,7 @@ public class OledProtectionService {
         @Override
         public void run() {
             stepPixelShift();
-            if (pixelShiftEnabled) {
+            if (pixelShiftEnabled && handler != null) {
                 handler.postDelayed(this, PIXEL_SHIFT_INTERVAL_MS);
             }
         }
@@ -91,21 +102,29 @@ public class OledProtectionService {
     }
 
     public void resetInactivityTimer() {
-        handler.removeCallbacks(inactivityRunnable);
-        handler.postDelayed(inactivityRunnable, inactivityTimeoutMs);
+        if (handler != null) {
+            handler.removeCallbacks(inactivityRunnable);
+            handler.postDelayed(inactivityRunnable, inactivityTimeoutMs);
+        }
     }
 
     public void stopInactivityTimer() {
-        handler.removeCallbacks(inactivityRunnable);
+        if (handler != null) {
+            handler.removeCallbacks(inactivityRunnable);
+        }
     }
 
     private void startPixelShift() {
-        handler.removeCallbacks(pixelShiftRunnable);
-        handler.postDelayed(pixelShiftRunnable, PIXEL_SHIFT_INTERVAL_MS);
+        if (handler != null) {
+            handler.removeCallbacks(pixelShiftRunnable);
+            handler.postDelayed(pixelShiftRunnable, PIXEL_SHIFT_INTERVAL_MS);
+        }
     }
 
     private void stopPixelShift() {
-        handler.removeCallbacks(pixelShiftRunnable);
+        if (handler != null) {
+            handler.removeCallbacks(pixelShiftRunnable);
+        }
     }
 
     /**
@@ -170,8 +189,12 @@ public class OledProtectionService {
     }
 
     public static boolean isOledDevice() {
-        String model = Build.MODEL != null ? Build.MODEL.toUpperCase() : "";
-        String display = Build.DISPLAY != null ? Build.DISPLAY.toUpperCase() : "";
+        String model = "";
+        String display = "";
+        try {
+            if (Build.MODEL != null) model = Build.MODEL.toUpperCase();
+            if (Build.DISPLAY != null) display = Build.DISPLAY.toUpperCase();
+        } catch (Throwable ignored) {}
         return model.contains("OLED") || display.contains("OLED")
                 || model.contains("A80") || model.contains("A90") || model.contains("A95");
     }

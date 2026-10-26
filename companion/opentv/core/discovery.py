@@ -23,7 +23,7 @@ import time
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 
 # ============================================================================
@@ -119,6 +119,7 @@ def parse_dns_name(data: bytes, offset: int) -> Tuple[str, int]:
     """
     Parse a DNS domain name from packet bytes supporting 0xc0 compression pointers,
     hybrid prefixes, chained pointers, recursion limits, and boundary checks.
+    Enforces RFC 1035 label length limits (<= 63 bytes) and cyclic loop guards.
     Returns (domain_name_str, next_offset).
     """
     labels: List[str] = []
@@ -126,10 +127,16 @@ def parse_dns_name(data: bytes, offset: int) -> Tuple[str, int]:
     jumped = False
     max_jumps = 20
     jumps = 0
+    visited_offsets: Set[int] = set()
 
     while True:
         if offset < 0 or offset >= len(data):
             break
+        if offset in visited_offsets:
+            # Pointer cycle detected - terminate parsing immediately
+            break
+        visited_offsets.add(offset)
+
         length = data[offset]
         if length == 0:
             if not jumped:
@@ -143,9 +150,15 @@ def parse_dns_name(data: bytes, offset: int) -> Tuple[str, int]:
                 initial_offset = offset + 2
                 jumped = True
             jumps += 1
-            if jumps > max_jumps or pointer >= len(data):
+            if jumps > max_jumps or pointer >= len(data) or pointer < 0:
                 break
             offset = pointer
+        elif (length & 0xC0) != 0:
+            # RFC 1035: Reserved label type indicator (0x40 or 0x80)
+            break
+        elif length > 63:
+            # RFC 1035 section 2.3.4: labels must be 63 octets or less
+            break
         else:
             offset += 1
             if offset + length > len(data):
@@ -636,7 +649,7 @@ def fetch_ssdp_descriptor(location_url: str, timeout: float = 0.5) -> Dict[str, 
     standard UPnP metadata fields (friendlyName, manufacturer, modelName, modelNumber).
     Returns an empty dict if the network fetch fails, times out, or contains invalid XML.
     """
-    if not location_url or not location_url.startswith("http"):
+    if not location_url or not (location_url.startswith("http://") or location_url.startswith("https://")):
         return {}
 
     try:

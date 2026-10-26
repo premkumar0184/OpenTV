@@ -573,13 +573,14 @@ FILLER_SUFFIXES: Set[str] = {
 # Unicode-aware regex matching alphanumeric tokens, acronyms, and version tags
 TOKEN_PATTERN: re.Pattern = re.compile(
     r"""
-    (?:[0-9]+[kKdD])                                                        # 4k, 8k, 3d, 2d
-    | (?:[mM][pP][34])                                                      # mp3, mp4, MP3, MP4
-    | (?:[hH]26[45])                                                        # h264, h265
-    | (?:[vV][0-9]+)                                                        # v2, v3, V2
-    | [A-Z\u00C0-\u00DE]+(?=[A-Z\u00C0-\u00DE][a-z\u00DF-\u00FF]|\d|\b)    # Acronyms before TitleCase or digits
-    | [A-Z\u00C0-\u00DE]?[a-z\u00DF-\u00FF]+                               # TitleCase or lowercase words
-    | [0-9]+                                                                # Standalone numbers
+    (?:[0-9]+[kKdD])                                                                    # 4k, 8k, 3d, 2d
+    | (?:[mM][pP][34])                                                                  # mp3, mp4, MP3, MP4
+    | (?:[hH]26[45])                                                                    # h264, h265
+    | (?:[vV][0-9]+)                                                                    # v2, v3, V2
+    | [A-Z\u00C0-\u024F\u0400-\u042F]+(?=[A-Z\u00C0-\u024F\u0400-\u042F][a-z\u00DF-\u024F\u0430-\u044F]|\d|\b)  # Acronyms before TitleCase/digits
+    | [A-Z\u00C0-\u024F\u0400-\u042F]?[a-z\u00DF-\u024F\u0430-\u044F]+               # TitleCase or lowercase words
+    | [0-9]+                                                                            # Standalone numbers
+    | [^\W\d_]+                                                                         # Any remaining Unicode word characters
     """,
     re.VERBOSE,
 )

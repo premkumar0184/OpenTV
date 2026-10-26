@@ -206,10 +206,16 @@ public class FocusController {
         // Zone 2: Header
         int headerIdx = findKeyIndex(headerViews, currentKey);
         if (headerIdx >= 0) {
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && !appViews.isEmpty()) {
-                int target = Math.min(headerIdx, Math.min(columnsPerRow - 1, appViews.size() - 1));
-                requestFocusOn(appViews.get(target));
-                return true;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (!appViews.isEmpty()) {
+                    int target = Math.min(headerIdx, Math.min(columnsPerRow - 1, appViews.size() - 1));
+                    requestFocusOn(appViews.get(target));
+                    return true;
+                } else if (!footerViews.isEmpty()) {
+                    int target = Math.min(headerIdx, footerViews.size() - 1);
+                    requestFocusOn(footerViews.get(target));
+                    return true;
+                }
             }
             return false;
         }
@@ -217,19 +223,25 @@ public class FocusController {
         // Zone 3: Footer
         int footerIdx = findKeyIndex(footerViews, currentKey);
         if (footerIdx >= 0) {
-            if (keyCode == KeyEvent.KEYCODE_DPAD_UP && !appViews.isEmpty()) {
-                int totalApps = appViews.size();
-                int fullRows = totalApps / columnsPerRow;
-                int remainder = totalApps % columnsPerRow;
-                int target;
-                if (remainder == 0 || footerIdx < remainder) {
-                    target = (fullRows - (remainder == 0 ? 1 : 0)) * columnsPerRow + Math.min(footerIdx, (remainder == 0 ? columnsPerRow : remainder) - 1);
-                } else {
-                    target = totalApps - 1;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                if (!appViews.isEmpty()) {
+                    int totalApps = appViews.size();
+                    int fullRows = totalApps / columnsPerRow;
+                    int remainder = totalApps % columnsPerRow;
+                    int target;
+                    if (remainder == 0 || footerIdx < remainder) {
+                        target = (fullRows - (remainder == 0 ? 1 : 0)) * columnsPerRow + Math.min(footerIdx, (remainder == 0 ? columnsPerRow : remainder) - 1);
+                    } else {
+                        target = totalApps - 1;
+                    }
+                    target = Math.max(0, Math.min(target, totalApps - 1));
+                    requestFocusOn(appViews.get(target));
+                    return true;
+                } else if (!headerViews.isEmpty()) {
+                    int target = Math.min(footerIdx, headerViews.size() - 1);
+                    requestFocusOn(headerViews.get(target));
+                    return true;
                 }
-                target = Math.max(0, Math.min(target, totalApps - 1));
-                requestFocusOn(appViews.get(target));
-                return true;
             }
             return false;
         }

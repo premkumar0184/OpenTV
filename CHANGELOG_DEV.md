@@ -604,6 +604,47 @@ Architected and implemented a high-performance Dynamic Sideload Banner Generator
    - Command: `stat -c "%s bytes" app-release.apk`
    - Result: 53,652 bytes (~52.4 KB). Passed strict 60 KB (61,440 bytes) ceiling check with 7,788 bytes of headroom remaining.
 
+---
+
+## [Sprint: Repository Deep Refinement, Hardening & Test Suite Expansion] - 2026-10-26
+
+### Overview
+Conducted an end-to-end security audit, dead-end elimination, performance hardening, and test suite expansion across both the native Android TV launcher (`app/`) and the cross-platform Python companion (`companion/`).
+- Hardened binary mDNS/SSDP parsers against cyclic decompression loops (RFC 1035), invalid label indicators, and oversized label attacks.
+- Neutralized ADB shell injection vectors across package names, component descriptors, and system properties.
+- Eliminated focus traps in the native launcher for empty app states and ensured smooth navigation.
+- Hardened TV input dispatching and OLED protection services with headless-safe guards.
+- Expanded Unicode tokenization for Cyrillic and international app names.
+- Expanded test suites: added 17 Python adversarial security tests (reaching 421 unified runner tests and 459 discovery tests) and 15 new Java unit tests (reaching 53 passing tests).
+- Verified APK size strictly under 60 KB (53,652 bytes) and 0 external pip dependencies.
+
+### Files Created
+- `tests/test_adversarial_security.py`: 17 comprehensive adversarial tests verifying command injection rejection, cyclic DNS pointers, non-UTF-8 subprocess decoding, and terminal dimension clamping.
+- `app/src/test/java/org/opentv/launcher/TvInputHelperTest.java`: 5 unit tests validating null/empty parameter guards and fallback intent generation.
+- `app/src/test/java/org/opentv/launcher/VendorAdapterTest.java`: 5 unit tests validating brand enum, Philips HDMI label suffix stripping, and vendor intent constants.
+- `app/src/test/java/org/opentv/launcher/OledProtectionServiceTest.java`: 5 unit tests validating timeout constants, subpixel orbital bounds within [-2, +2], and headless test resilience.
+
+### Files Modified
+- `companion/opentv/core/adb.py`: Added `validate_package_name` and `validate_component` regex checks; enforced sanitization in `build_disable_package_cmd`, `build_enable_package_cmd`, `build_set_home_cmd`, `build_dumpsys_package_cmd`, and `build_getprop_cmd`.
+- `companion/opentv/core/discovery.py`: Hardened `parse_dns_name` with visited offset cycle tracker, label length bounds (<=63 bytes), and reserved label indicator validation; enforced `http://` or `https://` on SSDP location descriptors.
+- `companion/opentv/core/app_names.py`: Expanded `TOKEN_PATTERN` to support Cyrillic, extended Latin, and general Unicode letters while preserving camelCase.
+- `companion/opentv/core/device.py`, `deployer.py`, `cli.py`: Added `errors="replace"` to subprocess execution to prevent decoding exceptions on non-UTF-8 output; fixed runner dispatch precedence.
+- `companion/opentv/tui/terminal.py`: Added `get_size()` with minimum (80, 24) clamping.
+- `app/src/main/java/org/opentv/launcher/FocusController.java`: Added empty-state spatial navigation between Header and Footer when app list is empty.
+- `app/src/main/java/org/opentv/launcher/MainActivity.java`: Added footer fallback focus in `onResume()` when app list is empty.
+- `app/src/main/java/org/opentv/launcher/TvInputHelper.java`: Added null and blank guards to `queryHdmiInputs`, `buildLaunchIntents`, and `launchInput`.
+- `app/src/main/java/org/opentv/launcher/OledProtectionService.java`: Made `handler` and `Build` property access safe for headless JVM testing.
+- `tests/run_tests.py`: Added `test_adversarial_security.py` to Tier 5 suite.
+
+### Verification Commands & Results
+1. `python3 tests/run_tests.py`: 421 tests executed (420 passed, 1 skipped), 0 failures in 1.969s.
+2. `python3 -m unittest discover -s tests`: 459 tests executed (458 passed, 1 skipped), 0 failures in 12.230s.
+3. `gradle test`: 53 tests passed, 0 failures, 0 errors across 6 test suites in 1s.
+4. `sh app/build.sh`: Successfully compiled, DEXed, and signed `app-release.apk` with v1, v2, and v3 signatures.
+5. `stat -c "%s bytes" app-release.apk`: 53,652 bytes (< 61,440 bytes ceiling).
+6. AST pip dependency scan: 0 external pip dependencies detected (100% Python 3 standard library).
+
+
 
 
 

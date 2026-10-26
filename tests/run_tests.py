@@ -32,6 +32,7 @@ TIER_FILES: dict[int, list[str]] = {
         "test_tier5_adversarial_hardening.py",
         "test_tier5_core_tui_hardening.py",
         "test_discovery_adversarial.py",
+        "test_adversarial_security.py",
     ],
 }
 

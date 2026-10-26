@@ -55,6 +55,7 @@ def default_subprocess_runner(
             cmd,
             capture_output=True,
             text=True,
+            errors="replace",
             timeout=timeout,
         )
         return proc.returncode, proc.stdout, proc.stderr

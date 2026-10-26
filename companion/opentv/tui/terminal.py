@@ -6,16 +6,22 @@ and clean fallback when executed in non-TTY or automated test environments.
 """
 from __future__ import annotations
 
+import shutil
 import sys
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 
 class TerminalController:
-    """Controls ANSI VT100 cursor movement, text styling, and screen clearing."""
+    """Controls ANSI VT100 cursor movement, text styling, screen clearing, and dimension clamping."""
 
     def __init__(self, stdin: Optional[Any] = None, stdout: Optional[Any] = None) -> None:
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
+
+    def get_size(self) -> Tuple[int, int]:
+        """Returns clamped terminal dimensions as (columns, lines), minimum (80, 24)."""
+        size = shutil.get_terminal_size(fallback=(80, 24))
+        return (max(80, size.columns), max(24, size.lines))
 
     @property
     def is_tty(self) -> bool:

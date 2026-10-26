@@ -58,6 +58,24 @@ class AdbWrapper:
         valid_port = self.validate_port(port)
         return f"{host.strip()}:{valid_port}"
 
+    @staticmethod
+    def validate_package_name(package_name: str) -> str:
+        """Validates that a package name conforms to Android package ID specifications."""
+        if not package_name or not isinstance(package_name, str):
+            raise ValueError(f"Invalid package name: '{package_name}'")
+        if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$", package_name) or len(package_name) > 256:
+            raise ValueError(f"Invalid package name format or illegal characters: '{package_name}'")
+        return package_name
+
+    @staticmethod
+    def validate_component(component: str) -> str:
+        """Validates that a component conforms to 'package/activity' specifications."""
+        if not component or not isinstance(component, str):
+            raise ValueError(f"Invalid component: '{component}'")
+        if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*/[a-zA-Z0-9_.]+$", component) or len(component) > 512:
+            raise ValueError(f"Invalid component format or illegal characters: '{component}'")
+        return component
+
     def base_cmd(self, target_device: Optional[str] = None) -> List[str]:
         """Returns the base command prefix with optional device serial target."""
         device = target_device or self.default_device
@@ -100,20 +118,23 @@ class AdbWrapper:
     def build_disable_package_cmd(
         self, package_name: str, user: int = 0, target_device: Optional[str] = None
     ) -> List[str]:
+        pkg = self.validate_package_name(package_name)
         return self.build_shell_cmd(
-            ["pm", "disable-user", "--user", str(user), package_name], target_device
+            ["pm", "disable-user", "--user", str(user), pkg], target_device
         )
 
     def build_enable_package_cmd(
         self, package_name: str, target_device: Optional[str] = None
     ) -> List[str]:
-        return self.build_shell_cmd(["pm", "enable", package_name], target_device)
+        pkg = self.validate_package_name(package_name)
+        return self.build_shell_cmd(["pm", "enable", pkg], target_device)
 
     def build_set_home_cmd(
         self, component: str, target_device: Optional[str] = None
     ) -> List[str]:
+        comp = self.validate_component(component)
         return self.build_shell_cmd(
-            ["cmd", "package", "set-home-activity", component], target_device
+            ["cmd", "package", "set-home-activity", comp], target_device
         )
 
     def build_resolve_home_cmd(self, target_device: Optional[str] = None) -> List[str]:
@@ -159,13 +180,16 @@ class AdbWrapper:
     ) -> List[str]:
         cmd = ["getprop"]
         if prop:
+            if not re.match(r"^[a-zA-Z0-9_.-]+$", prop):
+                raise ValueError(f"Invalid system property name: '{prop}'")
             cmd.append(prop)
         return self.build_shell_cmd(cmd, target_device)
 
     def build_dumpsys_package_cmd(
         self, package_name: str, target_device: Optional[str] = None
     ) -> List[str]:
-        return self.build_shell_cmd(["dumpsys", "package", package_name], target_device)
+        pkg = self.validate_package_name(package_name)
+        return self.build_shell_cmd(["dumpsys", "package", pkg], target_device)
 
     # Parsers
     def parse_devices(self, stdout: str) -> List[AdbDevice]:
